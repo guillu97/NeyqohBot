@@ -1,5 +1,8 @@
 class Role:
     def __str__(self):
+        return self.roleName
+
+    def display_role(self):
         return self.roleName + "\n" + self.description
 
 
