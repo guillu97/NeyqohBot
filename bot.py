@@ -19,9 +19,7 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
-
-bot = commands.Bot(command_prefix='!')
-
+### CONSTANTS ###
 MASTER_OF_THE_GAME = 'Maitre du jeu'
 
 GAME_CATEGORY_NAME = "Neyqoh_Game"
@@ -38,29 +36,39 @@ TIME_AUTO_DESTRUCT = 10  # TODO: 30 in prod
 
 NB_MAX_MAYOR_ELECTIONS = 3
 
+MINIMUM_PLAYER_NB = 2  # TODO: in prod : 4 players min
 
-bot.GAME_CREATED = False
-bot.GAME_STARTED = False
-bot.PLAYERS = []
-bot.DEADS = []
-bot.LOUPS = []
-bot.ALIVE_PLAYERS = []
-bot.LOUP_TARGETS = []
-bot.MAYOR_TARGETS = []
+DEFAULT_NB_LOUP = 1000  # if nb > nb_players => nb = nb_players/4
+###
 
-bot.WINNER = None
 
-bot.MAYOR = None
+def default_values(bot):
+    bot.GAME_CREATED = False
+    bot.GAME_STARTED = False
+    bot.PLAYERS = []
+    bot.DEADS = []
+    bot.LOUPS = []
+    bot.ALIVE_PLAYERS = []
+    bot.LOUP_TARGETS = []
+    bot.MAYOR_TARGETS = []
 
-bot.LOUP_FINAL_TARGET = None
+    bot.WINNER = None
 
-bot.MINIMUM_PLAYER_NB = 4  # TODO: in prod : 4 players min
+    bot.MAYOR = None
+    bot.LOUP_FINAL_TARGET = None
 
-bot.NB_LOUP = 2
+    bot.MINIMUM_PLAYER_NB = MINIMUM_PLAYER_NB
 
-bot.NB_NIGHTS = 1
+    bot.NB_LOUP = DEFAULT_NB_LOUP
 
-bot.TURN = ""
+    bot.NB_NIGHTS = 1
+
+    bot.TURN = ""
+
+
+bot = commands.Bot(command_prefix='!')
+
+default_values(bot)
 
 
 # on ready function: when the bot connects to the server
@@ -185,14 +193,7 @@ async def stop_game(ctx):
 
     await ctx.send('arret de la partie en cours')
     await delete_game_category(ctx)
-    bot.GAME_CREATED = False
-    bot.GAME_STARTED = False
-    bot.PLAYERS.clear()
-    bot.ALIVE_PLAYERS.clear()
-    bot.LOUPS.clear()
-    bot.LOUP_TARGETS.clear()
-    bot.DEADS.clear()
-    bot.NB_NIGHTS = 1
+    default_values(bot)
 
 
 @bot.command(name='delete', help="supprime les categrory du jeu si aucune partie n'est en cours")
@@ -323,7 +324,7 @@ async def game_process(ctx):
     await bot.HISTORY_TEXT_CHANNEL.send(message)
 
     await asyncio.sleep(TIME_AUTO_DESTRUCT)
-    await delete_game_category(ctx)
+    await stop_game(ctx)
 
 
 @bot.command(name='vote', help='vote pendant la partie')
