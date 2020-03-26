@@ -88,10 +88,11 @@ def default_values(bot):
 
     bot.ALLOW_MORE_ROLES = False
 
-
     bot.NB_NIGHTS = 1
 
     bot.TURN = ""
+
+    #bot.PAUSE = False
 
 
 bot = commands.Bot(command_prefix='!')
@@ -177,8 +178,6 @@ async def join_game(ctx):
     name = ctx.author.display_name
     print(f'{name} tried to joined')
 
-    
-
     if(bot.GAME_CREATED == False):
         await ctx.send(f'aucune partie en cours')
         return
@@ -209,15 +208,13 @@ async def join_game(ctx):
         print(roles)
         message_content += f'joueurs: {nameList}\n\n'
         message_content += f'{roles}\n'
-        
+
         print(nameList)
-        
+
     message = await ctx.send(message_content)
     # await asyncio.sleep(TIME_DELETE_MSG)
     # await message.delete()
     # await ctx.message.delete()
-    
-        
 
 
 @bot.command(name='stop', help='stop la partie en cours')
@@ -291,16 +288,15 @@ async def start_game(ctx):
 
 
 async def game_process(ctx):
-    
 
     await bot.HISTORY_TEXT_CHANNEL.send(
-        'vous avez 10 secondes avant que la partie commence')
+        f'\n\n**Vous avez {TIME_FOR_ROLES} secondes pour regarder vos rôles avant que la partie commence**\n\n')
     bot.TURN = "ROLES"
     # wait the time that the people check their roles
     await asyncio.sleep(TIME_FOR_ROLES)
     # while(not someone win or draw)
     while(True):
-        await bot.HISTORY_TEXT_CHANNEL.send(f'la nuit {bot.NB_NIGHTS} tombe')
+        await bot.HISTORY_TEXT_CHANNEL.send(f'la nuit **{bot.NB_NIGHTS}** tombe')
         await asyncio.sleep(1)
 
         # voyante's turn
@@ -323,10 +319,10 @@ async def game_process(ctx):
         ### display the night deads ###
         message = ""
         if(len(bot.DEADS_OF_NIGHT) == 0):
-            message += "personne n'est mort ce soir"
+            message += "\n\n**personne n'est mort ce soir**\n\n"
         else:
             for player in bot.DEADS_OF_NIGHT:
-                message += f"{player} est mort ce soir, son role : {player.role}\n"
+                message += f"\n**{player}** est mort ce soir, son role : **{player.role}**\n"
                 # now put it in the table for all the deads
                 bot.DEADS.append(player)
                 # remove the dead from the alive player table
@@ -383,17 +379,17 @@ async def game_process(ctx):
             bot.DEADS_OF_DAY.append(bot.VICTIM)
             # bot.VICTIM can be reset to None
             bot.VICTIM = None
-        
+
         if(check_ange_win(bot.DEADS_OF_DAY)):
             break
 
         ### display kill of the day ###
         message = ""
         if(len(bot.DEADS_OF_DAY) == 0):
-            message += "personne n'est mort"
+            message += "\n\n**personne n'est mort**\n"
         else:
             for player in bot.DEADS_OF_DAY:
-                message += f"{player} est mort aujourd'hui, son role : {player.role}\n"
+                message += f"\n**{player}** est mort aujourd'hui, son role : **{player.role}**\n"
                 ### check if ange wins ###
 
                 # now put it in the table for all the deads
@@ -403,18 +399,17 @@ async def game_process(ctx):
         bot.DEADS_OF_DAY.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
-        # if mayor killed, give his mayorship
-        for player in bot.DEADS:
-            if(player == bot.MAYOR):
-                await mayor_give_up()
-                break
-
-        
         ### check if village wins or lovers or loups ###
         print("check_win")
         print(check_win())
         if(check_win()):
             break
+
+        # if mayor killed, give his mayorship
+        for player in bot.DEADS:
+            if(player == bot.MAYOR):
+                await mayor_give_up()
+                break
 
         bot.NB_NIGHTS += 1
 
@@ -522,7 +517,7 @@ async def vote(ctx, choice: int):
         # if current_player is the mayor
         if(currentPlayer == bot.MAYOR):
             if(choice >= 0 and choice < len(bot.MAYOR_ONLY_CHOICES)):
-                await vote_mecanism(choice, currentPlayer, bot.HISTORY_TEXT_CHANNEL, bot.MAYOR_CHOICES)
+                await vote_mecanism(choice, currentPlayer, bot.HISTORY_TEXT_CHANNEL, bot.MAYOR_ONLY_CHOICES)
                 return
 
     if(bot.TURN == "VOYANTE"):
@@ -580,7 +575,7 @@ async def vote_mecanism(choice, currentPlayer, channel, targets_table):
 async def loups_turn():
 
     # warn village
-    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Les loups garous ont {TIME_FOR_LOUPS} secondes pour choisir leur victime de la nuit:**\n\n')
+    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Les loups garous ont {TIME_FOR_LOUPS} secondes pour choisir leur victime de la nuit**\n\n')
     bot.TURN = "LOUPS"
 
     # make channel accessible
@@ -616,7 +611,7 @@ async def loups_turn():
     # if no target
     if(len(bot.LOUP_TARGETS) == 0):
         # no dead from the loups
-        await bot.LOUPS_TEXT_CHANNEL.send("**vous n'avez pas choisi de victime**")
+        await bot.LOUPS_TEXT_CHANNEL.send("\n**vous n'avez pas choisi de victime**\n")
     else:
         targets_choice = None
         max_accusator = max([len(target.accusators)
@@ -628,9 +623,9 @@ async def loups_turn():
         if(len(targets_choice) > 1):
             # choose the target randomly
             rand_index = random.randint(0, len(targets_choice) - 1)
-            target_choice = targets_choice[rand_index]
+            target_choice = targets_choice[rand_index].player
         elif(len(targets_choice) == 1):
-            target_choice = targets_choice[0]
+            target_choice = targets_choice[0].player
         else:
             print(
                 "error loups_turn: not len(targets_choice) > 1 ,  not len(targets_choice) == 1")
@@ -646,9 +641,9 @@ async def loups_turn():
                 member, send_messages=False, read_messages=True)
 
         # warn loups of the choice
-        await bot.LOUPS_TEXT_CHANNEL.send(f'**votre choix est fait, vous avez choisi {target_choice.player}**')
+        await bot.LOUPS_TEXT_CHANNEL.send(f'**votre choix est fait, vous avez choisi {target_choice}**')
         await asyncio.sleep(1)
-        bot.LOUP_FINAL_TARGET = target_choice.player
+        bot.LOUP_FINAL_TARGET = target_choice
         bot.LOUP_TARGETS.clear()
 
     # make channel inacessible
@@ -747,7 +742,7 @@ async def election():
         await asyncio.sleep(time_left)
 
         # if no target
-        if(len(bot.MAYOR_TARGETS) == 0):
+        if(len(bot.MAYOR_TARGETS) == 0 and counter_max_elections != 0):
             # no mayor choice from the players
             await bot.HISTORY_TEXT_CHANNEL.send("\n\n**Vous n'avez pas choisi de maire, une nouvelle election va avoir lieu**\n\n")
         else:
@@ -769,9 +764,9 @@ async def election():
     elif(len(targets_choice) > 1):
         # choose the target randomly
         rand_index = random.randint(0, len(targets_choice) - 1)
-        target_choice = targets_choice[rand_index]
+        target_choice = targets_choice[rand_index].player
     elif(len(targets_choice) == 1):
-        target_choice = targets_choice[0]
+        target_choice = targets_choice[0].player
     else:
         print(
             "error in election: not len(targets_choice) > 1, not len(targets_choice) == 1")
@@ -781,15 +776,15 @@ async def election():
 
     # results
     # warn players of the choice
-    await bot.HISTORY_TEXT_CHANNEL.send(f'votre choix est fait, vous avez choisi {target_choice.player}')
+    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\nvotre choix est fait, le maire est **{target_choice}**\n\n')
     await asyncio.sleep(1)
-    bot.MAYOR = target_choice.player
+    bot.MAYOR = target_choice
     bot.MAYOR_TARGETS.clear()
 
 
 async def mayor_give_up():
 
-    message = f'Le maire a {TIME_FOR_MAYOR_GIVE_UP} secondes pour donner son role:\n\n'
+    message = f'\n\n**Le maire a {TIME_FOR_MAYOR_GIVE_UP} secondes pour désigner le nouveau maire:**\n\n'
     bot.MAYOR_CHOICES.clear()
     bot.TURN = "MAYOR_GIVE_UP"
 
@@ -834,7 +829,7 @@ async def mayor_give_up():
     # warn players of the choice
     await bot.HISTORY_TEXT_CHANNEL.send(f'votre choix est fait, vous avez choisi {target_choice}')
     await asyncio.sleep(1)
-    bot.MAYOR = target_choice.player
+    bot.MAYOR = target_choice
     bot.MAYOR_CHOICES.clear()
 
 
@@ -876,7 +871,7 @@ async def lynch():
     # if no target
     if(len(bot.VICTIM_TARGETS) == 0):
         # no mayor choice from the players
-        await bot.HISTORY_TEXT_CHANNEL.send("Vous n'avez pas choisi de victime, une nouveau lynchage va avoir lieu\n")
+        await bot.HISTORY_TEXT_CHANNEL.send("\n**Vous n'avez pas choisi de victime, le maire va choisir**\n")
     else:
         targets_choice.clear()
         max_accusator = max([len(target.accusators)
@@ -887,15 +882,23 @@ async def lynch():
     bot.VICTIM_TARGETS.clear()
 
     target_choice = None
-    # draw for the votes
+    # draw for the votes if equality
     if(len(targets_choice) > 1):
         # choose the target where the mayor is in accusators
         for victim_target in targets_choice:
             if(bot.MAYOR in victim_target.accusators):
-                target_choice = victim_target
+                target_choice = victim_target.player
                 break
     elif(len(targets_choice) == 1):
-        target_choice = targets_choice[0]
+        target_choice = targets_choice[0].player
+
+    elif(len(targets_choice) == 0):  # if no target at all
+        num = 0
+        # add all the alive players as targets for the mayor to choose
+        for player in bot.ALIVE_PLAYERS:
+            targets_choice.append(Target(actual_num=num, player=player))
+            num += 1
+
     # else:
     # print(target_choice)
     # print(len(target_choice))
@@ -905,26 +908,25 @@ async def lynch():
     # if target_choice is still None then the mayor need to choose the victim
     if(target_choice == None):
         bot.MAYOR_ONLY_CHOICES = targets_choice
-        target_choice = await mayor_choice(targets_choice)
+        target_choice = await mayor_choice()
         bot.MAYOR_ONLY_CHOICES.clear()
-        target_choice = target_choice[0]
 
     bot.TURN = "FIN_VICTIME_ELECTION"
 
     # results
     # warn players of the choice
-    await bot.HISTORY_TEXT_CHANNEL.send(f'votre choix est fait, vous avez choisi {target_choice.player}')
+    await bot.HISTORY_TEXT_CHANNEL.send(f'votre choix est fait, vous avez choisi {target_choice}')
     await asyncio.sleep(1)
-    bot.VICTIM = target_choice.player
+    bot.VICTIM = target_choice
     bot.VICTIM_TARGETS.clear()
 
 
-async def mayor_choice(targets_choice):
+async def mayor_choice():
 
     message = f'Le Maire a {TIME_FOR_MAYOR_FINAL_CHOICE} secondes pour choisir la victime finale\n\n'
 
     num = 0
-    for target in targets_choice:
+    for target in bot.MAYOR_ONLY_CHOICES:
         message += f'{num}:  {target.player}\n'
         num += 1
     message += '\ncommande: !vote <int>\n'
@@ -942,22 +944,38 @@ async def mayor_choice(targets_choice):
     await bot.LOUPS_TEXT_CHANNEL.send(f'{time_left} secondes restantes')
     await asyncio.sleep(time_left)
 
-    # find the target:
+    # there were targets from the whole village
+    # there was no target from the village => bot.MAYOR_ONLY_CHOICES = all alive_players as Targets
 
-    # if no target
-    if(len(bot.MAYOR_CHOICES) == 0):
+    # the mayor have chosen one
+    # the mayor havn't chosen one
+
+    # find the target:
+    targets_choice = []
+    max_accusator = max([len(target.accusators)
+                         for target in bot.MAYOR_ONLY_CHOICES])
+    targets_choice = [target for target in bot.MAYOR_ONLY_CHOICES if len(
+        target.accusators) == max_accusator]
+
+    target_choice = None
+    # if still target
+    if(len(targets_choice) > 1):
         # no dead from the loups
-        await bot.HISTORY_TEXT_CHANNEL.send("vous n'avez pas choisi de victime")
+        await bot.HISTORY_TEXT_CHANNEL.send("\n**vous n'avez pas choisi de victime, la victime va être aléatoire**\n")
         # choose the target randomly
         rand_index = random.randint(0, len(targets_choice) - 1)
-        target_choice = targets_choice[rand_index]
-    elif(len(bot.MAYOR_CHOICES) == 1):
-        target_choice = bot.MAYOR_CHOICES[0]
+        target_choice = targets_choice[rand_index].player
+    elif(len(targets_choice) == 1):
+        target_choice = targets_choice[0].player
     else:
-        print("error mayor_choice: len(bot.MAYOR_CHOICES) > 0")
+        print("error mayor_choice: len(targets_choice) < 1")
         raise Exception
 
-    bot.MAYOR_CHOICES = []
+    if(target_choice == None):
+        print("error mayor_choice: target_choice == None")
+        raise Exception
+
+    bot.MAYOR_ONLY_CHOICES.clear()
 
     bot.TURN = "FIN_MAYOR_CHOICE"
     return target_choice
@@ -973,7 +991,6 @@ async def assign_nb_loup(ctx, number_of_loups: int):
         await ctx.send('la partie a déjà commencé')
         return
 
-    
     if(number_of_loups > 0):
         print("test!!!!")
         print(number_of_loups)
@@ -993,6 +1010,7 @@ async def assign_nb_loup(ctx, number_of_loups: int):
             message = f'\n{roles}\n'
             await ctx.send(message)
 
+
 @bot.command(name='ange', help="configure le nombre d'ange pour la partie: 0 ou 1")
 @commands.has_role(MASTER_OF_THE_GAME)
 async def assign_nb_ange(ctx, number_of: int):
@@ -1009,6 +1027,7 @@ async def assign_nb_ange(ctx, number_of: int):
         print(roles)
         message = f'\n{roles}\n'
         await ctx.send(message)
+
 
 @bot.command(name='voyante', help="configure le nombre de voyantes pour la partie (0 ou plus)")
 @commands.has_role(MASTER_OF_THE_GAME)
@@ -1027,6 +1046,7 @@ async def assign_nb_voyante(ctx, number_of: int):
         message = f'\n{roles}\n'
         await ctx.send(message)
 
+
 @bot.command(name='roles', help="montre les roles choisis pour la partie")
 @commands.has_role(MASTER_OF_THE_GAME)
 async def show_roles(ctx):
@@ -1041,8 +1061,9 @@ async def show_roles(ctx):
     message = f'\n{roles}\n'
     await ctx.send(message)
 
+
 @bot.command(name='players', help="montre les joueurs actuellement dans la partie")
-#@commands.has_role(MASTER_OF_THE_GAME)
+# @commands.has_role(MASTER_OF_THE_GAME)
 async def show_players(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1053,8 +1074,9 @@ async def show_players(ctx):
     message = f'\n{nameList}\n'
     await ctx.send(message)
 
+
 @bot.command(name='players-alive', help="montre les joueurs actuellement dans la partie")
-#@commands.has_role(MASTER_OF_THE_GAME)
+# @commands.has_role(MASTER_OF_THE_GAME)
 async def show_players_alive(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1069,9 +1091,10 @@ async def show_players_alive(ctx):
     message = f'\n{nameList}\n'
     await ctx.send(message)
 
+
 @bot.command(name='allow-more-roles', help="autorise le fait d'ajouter plus de roles que de joueurs présents dans la partie")
 @commands.has_role(MASTER_OF_THE_GAME)
-async def assign_nb_voyante(ctx, boolean: bool):
+async def allow_more_roles(ctx, boolean: bool):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
@@ -1084,6 +1107,49 @@ async def assign_nb_voyante(ctx, boolean: bool):
         await ctx.send("il est autorisé d'ajouter plus de roles que de joueurs présents dans la partie")
     else:
         await ctx.send("il n'est pas autorisé d'ajouter plus de roles que de joueurs présents dans la partie")
+
+
+@bot.command(name='pause', help="met en pause le bot pendant un nombre de secondes donné")
+@commands.has_role(MASTER_OF_THE_GAME)
+async def pause_game(ctx, pause_time: int = 30):
+    if(bot.GAME_CREATED == False):
+        await ctx.send('aucune partie créée')
+        return
+    if(bot.GAME_STARTED == False):
+        await ctx.send("la partie n'a pas encore commencé")
+        return
+
+    if(ctx.channel != bot.HISTORY_TEXT_CHANNEL):
+        await bot.HISTORY_TEXT_CHANNEL.send(f"\n\n**Le bot est en pause pendant {pause_time} secondes**\n\n")
+    await ctx.send(f"\n\n**La bot est en pause pendant {pause_time} secondes**\n\n")
+
+    time.sleep(pause_time)
+
+    if(ctx.channel != bot.HISTORY_TEXT_CHANNEL):
+        await bot.HISTORY_TEXT_CHANNEL.send(f"\n\n**Le bot n'est plus en pause**\n\n")
+    await ctx.send(f"\n\n**Le bot n'est plus en pause**\n\n")
+
+    # msg = await bot.wait_for('message', check=lambda message: message.author == ctx.author)
+
+"""
+@bot.command(name='resume', help="continue la partie s'il y avait une pause")
+@commands.has_role(MASTER_OF_THE_GAME)
+async def pause_game(ctx):
+    if(bot.GAME_CREATED == False):
+        await ctx.send('aucune partie créée')
+        return
+    if(bot.GAME_STARTED == False):
+        await ctx.send("la partie n'a pas encore commencé")
+        return
+    if(bot.PAUSE == False):
+        await ctx.send("la partie n'est pas en pause")
+        return
+
+    bot.PAUSE = False
+    if(ctx.channel != bot.HISTORY_TEXT_CHANNEL):
+        await bot.HISTORY_TEXT_CHANNEL.send("\n\n**La partie continue**\n\n")
+    await ctx.send("\n\n**La partie continue**\n\n")
+"""
 
 
 @bot.command(name='min-players', help='configure le nombre de joueurs minimums pour la partie')
@@ -1149,6 +1215,7 @@ async def create_game_category(ctx):
         print(player)
         await player.private_channel.send(player.role.display_role())
 
+
 async def calc_roles(verbose):
     nb_players = len(bot.PLAYERS)
     if(bot.NB_LOUP < nb_players or bot.ALLOW_MORE_ROLES == True):
@@ -1167,7 +1234,7 @@ async def calc_roles(verbose):
     nb_voyante = bot.NB_VOYANTE
     for _ in range(nb_voyante):
         roles.append(Voyante())
-    
+
     nb_ange = bot.NB_ANGE
     for _ in range(nb_ange):
         roles.append(Ange())
@@ -1206,12 +1273,11 @@ async def calc_roles(verbose):
     else:
         return roles
 
-async def assign_roles():
-    
-    roles = await calc_roles(verbose=False)
-    
 
-    
+async def assign_roles():
+
+    roles = await calc_roles(verbose=False)
+
     bot.LOUPS.clear()
     bot.ALIVE_PLAYERS.clear()
 

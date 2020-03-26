@@ -25,6 +25,12 @@ class Voyante(Villageois):
         self.targets = []
 
 
+class Ange(Villageois):
+    def __init__(self):
+        self.roleName = "Ange"
+        self.description = "Un ange malicieux"
+
+
 # TODO :
 
 
@@ -40,11 +46,3 @@ class Chasseur(Villageois):
     def __init__(self):
         self.roleName = "Chasseur"
         self.description = "Un chasseur avec un fusil"
-
-# TODO:
-
-
-class Ange(Villageois):
-    def __init__(self):
-        self.roleName = "Ange"
-        self.description = "Un ange malicieux"
