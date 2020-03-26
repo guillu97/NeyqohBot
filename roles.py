@@ -31,13 +31,14 @@ class Ange(Villageois):
         self.description = "Un ange malicieux"
 
 
-# TODO :
-
-
 class Sorcière(Villageois):
     def __init__(self):
         self.roleName = "Sorcière"
-        self.description = "Une sorcière avec 2 potions"
+        self.description = "Une sorcière avec 2 potions, une de vie et une de mort"
+        self.lifePotion = True
+        self.deathPotion = True
+        self.target_choice = None
+
 
 # TODO:
 

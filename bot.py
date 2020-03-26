@@ -39,6 +39,8 @@ TIME_FOR_MAYOR_GIVE_UP = 10  # TODO in prod 30 s
 
 TIME_FOR_VOYANTE = 10  # TODO 20 - 30 secs in prod
 
+TIME_FOR_SORCIERE = 10
+
 TIME_DELETE_MSG = 0
 
 TIME_AUTO_DESTRUCT = 10  # TODO: 30 in prod
@@ -72,6 +74,9 @@ def default_values(bot):
     bot.MAYOR_ONLY_CHOICES = []
     bot.VICTIM_TARGETS = []
 
+    # bot.SORCIERE_SAVE = False
+    # bot.SORCIERE_KILL = None
+
     bot.WINNER = None
 
     bot.LOUP_FINAL_TARGET = None
@@ -92,7 +97,7 @@ def default_values(bot):
 
     bot.TURN = ""
 
-    #bot.PAUSE = False
+    # bot.PAUSE = False
 
 
 bot = commands.Bot(command_prefix='!')
@@ -305,6 +310,15 @@ async def game_process(ctx):
 
         ### wake loups ###
         await loups_turn()
+
+        ### wake sorcière ###
+        if(still_something(Sorcière)):
+            await sorcières_turn()
+            # if a sorciere killed add this kill to the deads of night
+
+            for sorcière in sorcières:
+                if(sorcière.target_choice):
+                    bot.DEADS_OF_DAY.append(sorcière.target_choice)
 
         ### wake villageois ###
         await bot.HISTORY_TEXT_CHANNEL.send('Le village se réveille')
@@ -526,6 +540,21 @@ async def vote(ctx, choice: int):
             if(choice >= 0 and choice < len(bot.ALIVE_PLAYERS)):
                 await vote_mecanism(choice, currentPlayer, currentPlayer.private_channel, currentPlayer.role.targets)
                 return
+    if(bot.TURN == "SORCIERE_LIFE"):
+        # if current_player is a sorciere
+        if(isinstance(currentPlayer.role, Sorcière)):
+            if(currentPlayer.role.lifePotion):
+                if(choice == 0):
+                    currentPlayer.role.lifePotion = False
+                    return
+    if(bot.TURN == "SORCIERE_DEATH"):
+        # if current_player is a sorciere
+        if(isinstance(currentPlayer.role, Sorcière)):
+            if(currentPlayer.role.deathPotion):
+                if(choice >= 0 and choice < len(bot.ALIVE_PLAYERS)):
+                    currentPlayer.role.target_choice = bot.ALIVE_PLAYERS[choice]
+                    currentPlayer.role.deathPotion = False
+                    return
 
 
 async def vote_mecanism(choice, currentPlayer, channel, targets_table):
@@ -570,6 +599,55 @@ async def vote_mecanism(choice, currentPlayer, channel, targets_table):
 
     # await asyncio.sleep(TIME_DELETE_MSG)
     # await ctx.message.delete()
+
+
+async def voyante_turn():
+    await bot.HISTORY_TEXT_CHANNEL.send(f'La voyante a {TIME_FOR_VOYANTE} secondes pour choisir un joueur\n\n')
+    bot.TURN = "VOYANTE"
+
+    # find the voyante(s)
+    voyantes = [player for player in bot.ALIVE_PLAYERS if(
+        isinstance(player.role, Voyante))]
+
+    # warn voyante(s)
+    message = f'Vous avez {TIME_FOR_VOYANTE} secondes pour choisir le joueur dont le role vous intéresse\n\n'
+    time_left = TIME_FOR_VOYANTE
+
+    num = 0
+    for player in bot.ALIVE_PLAYERS:
+        member = player.discordMember
+        message += f'{num}:  {member.display_name}\n'
+        num += 1
+    message += '\ncommande: !vote <int>\n'
+    message += 'exemple: !vote 5\n'
+
+    for voyante in voyantes:
+        await voyante.private_channel.send(message)
+
+    await asyncio.sleep(time_left - 10)
+    time_left = 10
+    for voyante in voyantes:
+        await voyante.private_channel.send(f'{time_left} secondes restantes')
+    await asyncio.sleep(time_left - 5)
+    time_left = 5
+    for voyante in voyantes:
+        await voyante.private_channel.send(f'{time_left} secondes restantes')
+    await asyncio.sleep(time_left)
+
+    bot.TURN = "FIN_VOYANTE"
+
+    # warn of the choice
+    for voyante in voyantes:
+        if(len(voyante.role.targets) == 0):
+            await voyante.private_channel.send("\n**vous n'avez choisi personne**\n")
+        elif(len(voyante.role.targets) == 1):
+            target = voyante.role.targets[0]
+            await voyante.private_channel.send(f'\n**votre choix est fait, vous avez choisi {target.player} qui est {target.player.role}**\n')
+        else:
+            print(
+                "error in voyante_turn : not len(voyante.targets) == 0  and not len(voyante.targets) == 1")
+            raise Exception
+        voyante.role.targets = []
 
 
 async def loups_turn():
@@ -654,53 +732,105 @@ async def loups_turn():
             member, send_messages=False, read_messages=False)
 
 
-async def voyante_turn():
-    await bot.HISTORY_TEXT_CHANNEL.send(f'La voyante a {TIME_FOR_VOYANTE} secondes pour choisir un joueur\n\n')
-    bot.TURN = "VOYANTE"
+async def sorcières_turn():
+    await bot.HISTORY_TEXT_CHANNEL.send(f'La sorcière a {TIME_FOR_SORCIERE} secondes pour choisir ses actions\n\n')
 
-    # find the voyante(s)
-    voyantes = [player for player in bot.ALIVE_PLAYERS if(
+    # find the sorcière
+    sorcières = [player for player in bot.ALIVE_PLAYERS if(
         isinstance(player.role, Voyante))]
 
-    # warn voyante(s)
-    message = f'Vous avez {TIME_FOR_VOYANTE} secondes pour choisir le joueur dont le role vous intéresse\n\n'
-    time_left = TIME_FOR_VOYANTE
+    tasks = []
+    for sorcière in sorcières:
+        tasks.append(asyncio.ensure_future(sorcière_play(sorcière_play)))
+    await asyncio.gather(*tasks)
 
-    num = 0
-    for player in bot.ALIVE_PLAYERS:
-        member = player.discordMember
-        message += f'{num}:  {member.display_name}\n'
-        num += 1
-    message += '\ncommande: !vote <int>\n'
-    message += 'exemple: !vote 5\n'
 
-    for voyante in voyantes:
-        await voyante.private_channel.send(message)
+async def sorcière_play(sorcière):
+    """for player in bot.ALIVE_PLAYERS:
+        if(isinstance(player.role, Sorcière)):
+            sorcière = player
+    """
 
-    await asyncio.sleep(time_left - 10)
-    time_left = 10
-    for voyante in voyantes:
-        await voyante.private_channel.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left - 5)
-    time_left = 5
-    for voyante in voyantes:
-        await voyante.private_channel.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left)
+    if(sorcière == None):
+        print('sorcière play but no sorcière alive')
+        raise Exception
 
-    bot.TURN = "FIN_VOYANTE"
+    needToWait = 0
 
-    # warn of the choice
-    for voyante in voyantes:
-        if(len(voyante.role.targets) == 0):
-            await voyante.private_channel.send("\n**vous n'avez choisi personne**\n")
-        elif(len(voyante.role.targets) == 1):
-            target = voyante.role.targets[0]
-            await voyante.private_channel.send(f'\n**votre choix est fait, vous avez choisi {target.player} qui est {target.player.role}**\n')
+    # show the victim of the loups if still life potion
+    if(sorcière.role.lifePotion):
+        message = f'\n\n**{LOUP_FINAL_TARGET}** va mourir ce soir\n\n'
+
+        message += f'\n\n**Voulez vous utiliser votre potion de vie sur cette personne?**\n\n'
+
+        message += f'\n\n**Vous avez {int(TIME_FOR_SORCIERE/2)} secondes pour effectuer cette action**\n\n'
+
+        bot.TURN = "SORCIERE_LIFE"
+
+        num = 0
+        message += f'{num}:  {bot.LOUP_FINAL_TARGET}\n'
+        message += '\nsi vous voulez sauver cette personne tapez: !vote 0\n'
+        message += "\n**sinon ne tapez rien si vous voulez garder votre potion de vie**"
+
+        await sorcière.private_channel.send(message)
+
+        time_left = int(TIME_FOR_SORCIERE/2)
+        await asyncio.sleep(time_left - 5)
+        time_left = 5
+        await sorcière.private_channel.send(f'{time_left} secondes restantes')
+        await asyncio.sleep(time_left)
+
+        bot.TURN = "FIN_SORCIERE_LIFE"
+
+        # warn of the choice
+
+        if(sorcière.role.lifePotion == True):
+            await sorcière.private_channel.send("\n**vous n'avez pas choisi de sauver cette personne**\n")
         else:
-            print(
-                "error in voyante_turn : not len(voyante.targets) == 0  and not len(voyante.targets) == 1")
-            raise Exception
-        voyante.role.targets = []
+            await sorcière.private_channel.send(f'\n**votre choix est fait, vous avez choisi de sauver cette personne: {bot.LOUP_FINAL_TARGET}**\n')
+            bot.LOUP_FINAL_TARGET = None
+    else:
+        needToWait += 1
+
+    if(sorcière.role.deathPotion):
+
+        message = f"\n\n**Voulez vous utiliser votre potion de mort sur quelqu'un?**\n\n"
+
+        message += f'\n\n**Vous avez {int(TIME_FOR_SORCIERE/2)} secondes pour effectuer cette action**\n\n'
+
+        bot.TURN = "SORCIERE_DEATH"
+
+        num = 0
+        for player in bot.ALIVE_PLAYERS:
+            message += f'{num}:  {player}\n'
+            num += 1
+        message += '\ncommande: !vote <int>\n'
+        message += 'exemple: !vote 5\n'
+        message += '**ne votez pas si vous ne voulez pas utiliser votre potion de mort**\n'
+        await sorcière.private_channel.send(message)
+
+        time_left = int(TIME_FOR_SORCIERE/2)
+        await asyncio.sleep(time_left - 5)
+        time_left = 5
+        await sorcière.private_channel.send(f'{time_left} secondes restantes')
+        await asyncio.sleep(time_left)
+
+        bot.TURN = "FIN_SORCIERE_DEATH"
+
+        # warn of the choice
+
+        if(sorcière.role.deathPotion):
+            await sorcière.private_channel.send("\n**vous n'avez pas pas utiliser votre potion de mort**\n")
+        else:
+            await sorcière.private_channel.send(f'\n**votre choix est fait, vous avez choisi de tuer cette personne: {sorcière.role.target_choice}**\n')
+            #sorcière.role.target_choice = None
+    else:
+        needToWait += 1
+
+    # still wait if no potion
+    for _ in range(needToWait):
+        time_left = int(TIME_FOR_SORCIERE/2)
+        await asyncio.sleep(time_left)
 
 
 async def election():
