@@ -13,6 +13,13 @@ class LoupGarou(Role):
         self.image_filename = "loup-garou.png"
 
 
+class LoupBlanc(LoupGarou):
+    def __init__(self):
+        self.roleName = "Loup-Garou Blanc"
+        self.description = "Son objectif est de terminer SEUL la partie. Les autres Loups-Garous croient qu'il est un loup normal, mais une nuit sur deux il peut assassiner un loup de son choix..."
+        self.image_filename = "loupBlanc.png"
+        self.target_choice = None
+
 
 class Villageois(Role):
     def __init__(self):

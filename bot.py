@@ -30,6 +30,7 @@ LOUPS_TEXT_CHANNEL_NAME = 'Loups Garous'
 
 TIME_FOR_ROLES = 10
 TIME_FOR_LOUPS = 10
+TIME_FOR_LOUP_BLANC = 20
 TIME_FOR_MAYOR_ELECTION = 10  # TODO: 120 in prod
 
 TIME_FOR_VICTIM_ELECTION = 10  # TODO: 120 in prod
@@ -57,7 +58,9 @@ MINIMUM_PLAYER_NB = 2  # TODO: in prod : 4 players min
 
 DEFAULT_NB_LOUP = 1000  # if nb > nb_players => nb = nb_players/4
 
-DEFAULT_NB_CUPIDON = 1
+DEFAULT_NB_LOUP_BLANC = 1
+
+DEFAULT_NB_CUPIDON = 0
 
 DEFAULT_NB_VOYANTE = 0
 
@@ -97,11 +100,11 @@ def default_values(bot):
 
     bot.MINIMUM_PLAYER_NB = MINIMUM_PLAYER_NB
     bot.NB_LOUP = DEFAULT_NB_LOUP
+    bot.NB_LOUP_BLANC = DEFAULT_NB_LOUP_BLANC
     bot.NB_CUPIDON = DEFAULT_NB_CUPIDON
     bot.NB_VOYANTE = DEFAULT_NB_VOYANTE
     bot.NB_SORCIERE = DEFAULT_NB_SORCIERE
     bot.NB_CHASSEUR = DEFAULT_NB_CHASSEUR
-
     bot.NB_ANGE = 0
 
     bot.ALLOW_MORE_ROLES = False
@@ -319,10 +322,11 @@ async def game_process(ctx):
 
         # cupidon's turn
         if(bot.NB_NIGHTS == 1):
-            await cupidon_turn()
+            if(bot.NB_CUPIDON == 1):
+                await cupidon_turn()
 
         # voyante's turn
-        if(still_something(Voyante)):
+        if(await still_something(Voyante)):
             await voyantes_turn()
 
         # TODO : do a gather to make the above roles play at the same time
@@ -330,12 +334,29 @@ async def game_process(ctx):
         ### wake loups ###
         await loups_turn()
 
+        ### wake loup blanc ###
+        if(bot.NB_NIGHTS % 2 == 0):
+            if(bot.NB_LOUP_BLANC == 1):
+                if(await still_something(LoupBlanc)):
+                    await loup_blanc_turn()
+                    # add the kill if there is one
+                    loupBlanc = None
+                    for player in bot.LOUPS:
+                        if(isinstance(player.role, LoupBlanc)):
+                            loupBlanc = player
+                            break
+                    if(loupBlanc == None):
+                        print("error in game_process: loupBlanc == None")
+                        raise AttributeError
+                    if(loupBlanc.role.target_choice != None):
+                        bot.DEADS_OF_NIGHT.append(loupBlanc.role.target_choice)
+
         ### wake sorcière ###
-        if(still_something(Sorcière)):
+        if(await still_something(Sorcière)):
             await sorcières_turn()
 
         ### wake villageois ###
-        await bot.HISTORY_TEXT_CHANNEL.send('Le village se réveille')
+        await bot.HISTORY_TEXT_CHANNEL.send('\n\n**Le village se réveille**\n\n')
         bot.TURN = "DAY"
 
         ### compute deads over night ###
@@ -360,14 +381,6 @@ async def game_process(ctx):
         else:
             for player in bot.DEADS_OF_NIGHT:
                 message += f"\n**{player}** est mort ce soir, son role : **{player.role}**\n"
-                # check if amoureux
-                if(player in bot.AMOUREUX):
-                    bot.AMOUREUX.remove(player)
-                    message += f"\n**{player}** était amoureux avec : **{bot.AMOUREUX[0]}**\n"
-                    message += f"\n**{bot.AMOUREUX[0]}** est donc également mort ce soir, son role : **{bot.AMOUREUX[0].role}**\n"
-                    bot.DEADS.append(bot.AMOUREUX[0])
-                    bot.ALIVE_PLAYERS.remove(bot.AMOUREUX[0])
-                    bot.AMOUREUX.clear()
                 # now put it in the table for all the deads
                 bot.DEADS.append(player)
                 # remove the dead from the alive player table
@@ -375,11 +388,13 @@ async def game_process(ctx):
         bot.DEADS_OF_NIGHT.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
+        await check_amoureux()
+
         ### check someone wins or draw ###
         # check if only one player left
         print("check_win")
-        print(check_win())
-        if(check_win()):
+        print(await check_win())
+        if(await check_win()):
             break
 
         # chasseur if killed then kill someone:
@@ -391,11 +406,13 @@ async def game_process(ctx):
                     bot.ALIVE_PLAYERS.remove(player.role.target_choice)
                     break
 
+        await check_amoureux()
+
         ### check someone wins or draw ###
         # check if only one player left
         print("check_win")
-        print(check_win())
-        if(check_win()):
+        print(await check_win())
+        if(await check_win()):
             break
 
         # if mayor killed, give his mayorship
@@ -441,7 +458,7 @@ async def game_process(ctx):
             # bot.VICTIM can be reset to None
             bot.VICTIM = None
 
-        if(check_ange_win(bot.DEADS_OF_DAY)):
+        if(await check_ange_win(bot.DEADS_OF_DAY)):
             break
 
         ### display kill of the day ###
@@ -451,14 +468,6 @@ async def game_process(ctx):
         else:
             for player in bot.DEADS_OF_DAY:
                 message += f"\n**{player}** est mort aujourd'hui, son role : **{player.role}**\n"
-                # check if amoureux
-                if(player in bot.AMOUREUX):
-                    bot.AMOUREUX.remove(player)
-                    message += f"\n**{player}** était amoureux avec : **{bot.AMOUREUX[0]}**\n"
-                    message += f"\n**{bot.AMOUREUX[0]}** est donc également mort ce soir, son role : **{bot.AMOUREUX[0].role}**\n"
-                    bot.DEADS.append(bot.AMOUREUX[0])
-                    bot.ALIVE_PLAYERS.remove(bot.AMOUREUX[0])
-                    bot.AMOUREUX.clear()
                 # now put it in the table for all the deads
                 bot.DEADS.append(player)
                 # remove the dead from the alive player table
@@ -466,10 +475,24 @@ async def game_process(ctx):
         bot.DEADS_OF_DAY.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
+        await check_amoureux()
+
+        # chasseur if killed then kill someone:
+        for player in bot.DEADS:
+            if(isinstance(player.role, Chasseur)):
+                if(player.role.target_choice == None):
+                    await chasseur_turn()
+                    bot.DEADS.append(player.role.target_choice)
+                    bot.ALIVE_PLAYERS.remove(player.role.target_choice)
+                    break
+
+        ### check amoureux ###
+        await check_amoureux()
+
         ### check if village wins or lovers or loups ###
         print("check_win")
-        print(check_win())
-        if(check_win()):
+        print(await check_win())
+        if(await check_win()):
             break
 
         # if mayor killed, give his mayorship
@@ -477,6 +500,11 @@ async def game_process(ctx):
             if(player == bot.MAYOR):
                 await mayor_give_up()
                 break
+
+        ### remove loups that have been killed from the loups table ###
+        for player in bot.DEADS:
+            if(player in bot.LOUPS):
+                bot.LOUPS.remove(player)
 
         bot.NB_NIGHTS += 1
 
@@ -489,7 +517,19 @@ async def game_process(ctx):
     await stop_game(ctx)
 
 
-def still_something(check_class):
+async def check_amoureux():
+    # check if amoureux in deads
+    for player in bot.DEADS:
+        if(player in bot.AMOUREUX):
+            bot.AMOUREUX.remove(player)
+            message += f"\n**{player}** était amoureux avec : **{bot.AMOUREUX[0]}**\n"
+            message += f"\n**{bot.AMOUREUX[0]}** est donc également mort, son role : **{bot.AMOUREUX[0].role}**\n"
+            bot.DEADS.append(bot.AMOUREUX[0])
+            bot.ALIVE_PLAYERS.remove(bot.AMOUREUX[0])
+            bot.AMOUREUX.clear()
+
+
+async def still_something(check_class):
     # check if no more loup in game
     still = False
     for player in bot.ALIVE_PLAYERS:
@@ -499,18 +539,18 @@ def still_something(check_class):
     return still
 
 
-def check_ange_win(table_deads_of_day):
+async def check_ange_win(table_deads_of_day):
     if(len(table_deads_of_day) == 1 and isinstance(table_deads_of_day[0].role, Ange)):
         bot.WINNER = "Ange"
         return True
     return False
 
 
-def check_win():
+async def check_win():
 
-    still_loups = still_something(LoupGarou)
-    still_villageois = still_something(Villageois)
-    still_people = still_something(Role)
+    still_loups = await still_something(LoupGarou)
+    still_villageois = await still_something(Villageois)
+    still_people = await still_something(Role)
 
     if(len(bot.ALIVE_PLAYERS) == 1):
         bot.WINNER = bot.ALIVE_PLAYERS[0].role
@@ -550,6 +590,16 @@ async def vote(ctx, choice: int):
             currentPlayer = player
             break
 
+    if(bot.TURN == "CHASSEUR"):
+        # if current_player is a chasseur
+        if(isinstance(currentPlayer.role, Chasseur)):
+            if(currentPlayer.role.target_choice == None):
+                if(choice >= 0 and choice < len(bot.ALIVE_PLAYERS)):
+                    currentPlayer.role.target_choice = bot.ALIVE_PLAYERS[choice]
+                    await bot.HISTORY_TEXT_CHANNEL.send(
+                        f"\n\n**Vous avez choisi {currentPlayer.role.target_choice}**\n\n")
+                    return
+
     if(bot.TURN == "MAYOR_GIVE_UP"):
         # if current_player is the mayor
         if(currentPlayer == bot.MAYOR):
@@ -557,7 +607,7 @@ async def vote(ctx, choice: int):
                 await vote_mecanism(choice, currentPlayer, bot.HISTORY_TEXT_CHANNEL, bot.MAYOR_CHOICES)
                 return
 
-    if(currentPlayer == None):
+    if(currentPlayer not in bot.ALIVE_PLAYERS):
         print('current player is not in the alive players')
         return
 
@@ -571,6 +621,17 @@ async def vote(ctx, choice: int):
                     await vote_mecanism(choice, currentPlayer, bot.LOUPS_TEXT_CHANNEL, bot.LOUP_TARGETS)
                     return
 
+    if(bot.TURN == "LOUP_BLANC"):
+        # if current_player is a loupBlanc
+        if(isinstance(currentPlayer.role, LoupBlanc)):
+            targets = [player for player in bot.LOUPS if(
+                not isinstance(player.role, LoupBlanc))]
+            if(choice >= 0 and choice < len(targets)):
+                currentPlayer.role.target_choice = targets[choice]
+                await currentPlayer.private_channel.send(
+                    f"\n\n**Vous avez choisi {currentPlayer.role.target_choice}**\n\n")
+                return
+
     if(bot.TURN == "MAYOR_ELECTION"):
         # if choice is valid
         if(choice >= 0 and choice < len(bot.ALIVE_PLAYERS)):
@@ -578,6 +639,7 @@ async def vote(ctx, choice: int):
             return
 
     if(bot.TURN == "VICTIME_ELECTION"):
+        # if player is alive
         # if choice is valid
         if(choice >= 0 and choice < len(bot.ALIVE_PLAYERS)):
             await vote_mecanism(choice, currentPlayer, bot.HISTORY_TEXT_CHANNEL, bot.VICTIM_TARGETS)
@@ -623,16 +685,6 @@ async def vote(ctx, choice: int):
                     currentPlayer.role.target_choice = bot.ALIVE_PLAYERS[choice]
                     currentPlayer.role.deathPotion = False
                     await currentPlayer.private_channel.send(f"\n\n**Vous avez choisi d'empoisonner {currentPlayer.role.target_choice}**\n\n")
-                    return
-
-    if(bot.TURN == "CHASSEUR"):
-        # if current_player is a chasseur
-        if(isinstance(currentPlayer.role, Chasseur)):
-            if(currentPlayer.role.target_choice == None):
-                if(choice >= 0 and choice < len(bot.ALIVE_PLAYERS)):
-                    currentPlayer.role.target_choice = bot.ALIVE_PLAYERS[choice]
-                    await bot.HISTORY_TEXT_CHANNEL.send(
-                        f"\n\n**Vous avez choisi {currentPlayer.role.target_choice}**\n\n")
                     return
 
 
@@ -882,6 +934,58 @@ async def loups_turn():
             member, send_messages=False, read_messages=False)
 
 
+async def loup_blanc_turn():
+    # warn village
+    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Le loup blanc a {TIME_FOR_LOUP_BLANC} secondes pour choisir une victime parmi les loups ou non**\n\n')
+
+    # search loup blanc
+    loupBlanc = None
+    for player in bot.ALIVE_PLAYERS:
+        if(isinstance(player.role, LoupBlanc)):
+            loupBlanc = player
+            break
+
+    if(loupBlanc == None):
+        print("error in loup_blanc_turn: loupBlanc = None")
+        raise ValueError
+
+    await loupBlanc.private_channel.send(f'\n\n**Vous avez {TIME_FOR_LOUP_BLANC} secondes pour choisir une victime parmi les loups ou non**\n\n')
+    message = ""
+    num = 0
+    targets = [player for player in bot.LOUPS if(
+        not isinstance(player.role, LoupBlanc))]
+    print(targets)
+    for player in targets:
+        print(player)
+    if(len(targets) > 0):
+        bot.TURN = "LOUP_BLANC"
+        for player in targets:
+            message += f'{num}:  {player}\n'
+            num += 1
+        message += '\ncommande: !vote <int>\n'
+        message += 'exemple: !vote 5\n'
+        message += '\n\n**si vous ne votez pas, vous ne tuerez aucun loup cette nuit**\n\n'
+    else:
+        message += "\n\n**Tous les loups sont dejà morts, attendez la fin de votre tour**\n\n"
+        bot.TURN = "FIN_LOUP_BLANC"
+    await loupBlanc.private_channel.send(message)
+
+    time_left = int(TIME_FOR_LOUP_BLANC)
+    await asyncio.sleep(time_left - 5)
+    time_left = 5
+    await loupBlanc.private_channel.send(f'{time_left} secondes restantes')
+    await asyncio.sleep(time_left)
+
+    bot.TURN = "FIN_LOUP_BLANC"
+
+    # warn of the choice
+    if(loupBlanc.role.target_choice != None):
+        await loupBlanc.private_channel.send(f'\n**votre choix est fait, vous avez choisi de tuer cette personne: {loupBlanc.role.target_choice}**\n')
+    else:
+        if(len(targets) > 0):
+            await loupBlanc.private_channel.send(f"\n**votre choix est fait, vous n'avez pas tuer de loup cette nuit**\n")
+
+
 async def sorcières_turn():
     await bot.HISTORY_TEXT_CHANNEL.send(f'La sorcière a {TIME_FOR_SORCIERE} secondes pour choisir ses actions\n\n')
 
@@ -980,7 +1084,7 @@ async def sorcière_play(sorcière):
             await sorcière.private_channel.send("\n**vous n'avez pas pas utiliser votre potion de mort**\n")
         else:
             await sorcière.private_channel.send(f'\n**votre choix est fait, vous avez choisi de tuer cette personne: {sorcière.role.target_choice}**\n')
-            #sorcière.role.target_choice = None
+            # sorcière.role.target_choice = None
     else:
         time_left = int(TIME_FOR_SORCIERE/2)
         await asyncio.sleep(time_left)
@@ -1315,7 +1419,6 @@ async def assign_nb_loup(ctx, number_of_loups: int):
         return
 
     if(number_of_loups > 0):
-        print("test!!!!")
         print(number_of_loups)
         if(not bot.ALLOW_MORE_ROLES):
             if(number_of_loups < len(bot.PLAYERS)):
@@ -1332,6 +1435,24 @@ async def assign_nb_loup(ctx, number_of_loups: int):
             print(roles)
             message = f'\n{roles}\n'
             await ctx.send(message)
+
+
+@bot.command(name='loupBlanc', help="configure le nombre de loup-garou blanc pour la partie: 0 ou 1")
+@commands.has_role(MASTER_OF_THE_GAME)
+async def assign_nb_loupBlanc(ctx, number_of: int):
+    if(bot.GAME_CREATED == False):
+        await ctx.send('aucune partie créée')
+        return
+    if(bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé')
+        return
+
+    if(number_of == 0 or number_of == 1):
+        bot.NB_LOUP_BLANC = number_of
+        roles = await calc_roles(verbose=True)
+        print(roles)
+        message = f'\n{roles}\n'
+        await ctx.send(message)
 
 
 @bot.command(name='ange', help="configure le nombre d'ange pour la partie: 0 ou 1")
@@ -1629,9 +1750,13 @@ async def calc_roles(verbose):
     for _ in range(nb_cupidon):
         roles.append(Cupidon())
 
+    nb_loupBlanc = bot.NB_LOUP_BLANC
+    for _ in range(nb_loupBlanc):
+        roles.append(LoupBlanc())
+
     # TODO: Here add the substraction of the nb of special role
     nb_villageois = nb_players - nb_loup - nb_voyante - \
-        nb_ange - nb_sorcière - nb_chasseur - nb_cupidon
+        nb_ange - nb_sorcière - nb_chasseur - nb_cupidon - nb_loupBlanc
 
     if(nb_villageois < 0):
         print('nb_villageois < 0')
@@ -1656,16 +1781,19 @@ async def calc_roles(verbose):
         if(nb_loup != 0):
             message += f"loups : {nb_loup}\n"
         # TODO: add here for the special roles
-        if(nb_voyante != 0):
-            message += f"voyante: {nb_voyante}\n"
-        if(nb_ange != 0):
-            message += f"ange: {nb_ange}\n"
-        if(nb_sorcière != 0):
-            message += f'sorcière: {nb_sorcière}\n'
-        if(nb_chasseur != 0):
-            message += f'chasseur: {nb_chasseur}\n'
+        if(nb_loupBlanc != 0):
+            message += f"loup blanc: {nb_loupBlanc}\n"
         if(nb_cupidon != 0):
             message += f'cupidon: {nb_cupidon}\n'
+        if(nb_voyante != 0):
+            message += f"voyante: {nb_voyante}\n"
+        if(nb_sorcière != 0):
+            message += f'sorcière: {nb_sorcière}\n'
+        if(nb_ange != 0):
+            message += f"ange: {nb_ange}\n"
+        if(nb_chasseur != 0):
+            message += f'chasseur: {nb_chasseur}\n'
+
         return message
     else:
         return roles
