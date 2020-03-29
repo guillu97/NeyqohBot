@@ -451,8 +451,14 @@ async def game_process(ctx):
         else:
             for player in bot.DEADS_OF_DAY:
                 message += f"\n**{player}** est mort aujourd'hui, son role : **{player.role}**\n"
-                ### check if ange wins ###
-
+                # check if amoureux
+                if(player in bot.AMOUREUX):
+                    bot.AMOUREUX.remove(player)
+                    message += f"\n**{player}** était amoureux avec : **{bot.AMOUREUX[0]}**\n"
+                    message += f"\n**{bot.AMOUREUX[0]}** est donc également mort ce soir, son role : **{bot.AMOUREUX[0].role}**\n"
+                    bot.DEADS.append(bot.AMOUREUX[0])
+                    bot.ALIVE_PLAYERS.remove(bot.AMOUREUX[0])
+                    bot.AMOUREUX.clear()
                 # now put it in the table for all the deads
                 bot.DEADS.append(player)
                 # remove the dead from the alive player table
