@@ -37,13 +37,17 @@ TIME_FOR_MAYOR_FINAL_CHOICE = 10  # TODO: 10 - 20 secs in prod
 
 TIME_FOR_MAYOR_GIVE_UP = 10  # TODO in prod 30 s
 
+TIME_FOR_CUPIDON = 20
+
 TIME_FOR_VOYANTE = 10  # TODO 20 - 30 secs in prod
 
 TIME_FOR_SORCIERE = 50
 
+TIME_FOR_CHASSEUR = 25
+
 TIME_DELETE_MSG = 0
 
-TIME_AUTO_DESTRUCT = 10  # TODO: 30 in prod
+TIME_AUTO_DESTRUCT = 120  # TODO: 30 in prod
 
 NB_MAX_MAYOR_ELECTIONS = 3
 
@@ -53,9 +57,13 @@ MINIMUM_PLAYER_NB = 2  # TODO: in prod : 4 players min
 
 DEFAULT_NB_LOUP = 1000  # if nb > nb_players => nb = nb_players/4
 
-DEFAULT_NB_VOYANTE = 2
+DEFAULT_NB_CUPIDON = 1
+
+DEFAULT_NB_VOYANTE = 0
 
 DEFAULT_NB_SORCIERE = 0
+
+DEFAULT_NB_CHASSEUR = 0
 
 MAX_NB_ANGE = 1
 ###
@@ -76,6 +84,8 @@ def default_values(bot):
     bot.MAYOR_ONLY_CHOICES = []
     bot.VICTIM_TARGETS = []
 
+    bot.AMOUREUX = []
+
     # bot.SORCIERE_SAVE = False
     # bot.SORCIERE_KILL = None
 
@@ -86,12 +96,11 @@ def default_values(bot):
     bot.VICTIM = None
 
     bot.MINIMUM_PLAYER_NB = MINIMUM_PLAYER_NB
-
     bot.NB_LOUP = DEFAULT_NB_LOUP
-
+    bot.NB_CUPIDON = DEFAULT_NB_CUPIDON
     bot.NB_VOYANTE = DEFAULT_NB_VOYANTE
-
     bot.NB_SORCIERE = DEFAULT_NB_SORCIERE
+    bot.NB_CHASSEUR = DEFAULT_NB_CHASSEUR
 
     bot.NB_ANGE = 0
 
@@ -308,9 +317,15 @@ async def game_process(ctx):
         await bot.HISTORY_TEXT_CHANNEL.send(f'la nuit **{bot.NB_NIGHTS}** tombe')
         await asyncio.sleep(1)
 
+        # cupidon's turn
+        if(bot.NB_NIGHTS == 1):
+            await cupidon_turn()
+
         # voyante's turn
         if(still_something(Voyante)):
             await voyantes_turn()
+
+        # TODO : do a gather to make the above roles play at the same time
 
         ### wake loups ###
         await loups_turn()
@@ -345,12 +360,43 @@ async def game_process(ctx):
         else:
             for player in bot.DEADS_OF_NIGHT:
                 message += f"\n**{player}** est mort ce soir, son role : **{player.role}**\n"
+                # check if amoureux
+                if(player in bot.AMOUREUX):
+                    bot.AMOUREUX.remove(player)
+                    message += f"\n**{player}** était amoureux avec : **{bot.AMOUREUX[0]}**\n"
+                    message += f"\n**{bot.AMOUREUX[0]}** est donc également mort ce soir, son role : **{bot.AMOUREUX[0].role}**\n"
+                    bot.DEADS.append(bot.AMOUREUX[0])
+                    bot.ALIVE_PLAYERS.remove(bot.AMOUREUX[0])
+                    bot.AMOUREUX.clear()
                 # now put it in the table for all the deads
                 bot.DEADS.append(player)
                 # remove the dead from the alive player table
                 bot.ALIVE_PLAYERS.remove(player)
         bot.DEADS_OF_NIGHT.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
+
+        ### check someone wins or draw ###
+        # check if only one player left
+        print("check_win")
+        print(check_win())
+        if(check_win()):
+            break
+
+        # chasseur if killed then kill someone:
+        for player in bot.DEADS:
+            if(isinstance(player.role, Chasseur)):
+                if(player.role.target_choice == None):
+                    await chasseur_turn()
+                    bot.DEADS.append(player.role.target_choice)
+                    bot.ALIVE_PLAYERS.remove(player.role.target_choice)
+                    break
+
+        ### check someone wins or draw ###
+        # check if only one player left
+        print("check_win")
+        print(check_win())
+        if(check_win()):
+            break
 
         # if mayor killed, give his mayorship
         for player in bot.DEADS:
@@ -379,13 +425,6 @@ async def game_process(ctx):
         for role in roles:
             message += f'{role}\n'
         await bot.HISTORY_TEXT_CHANNEL.send(message)
-
-        ### check someone wins or draw ###
-        # check if only one player left
-        print("check_win")
-        print(check_win())
-        if(check_win()):
-            break
 
         ### vote for maire ###
         if(bot.MAYOR == None):
@@ -470,6 +509,9 @@ def check_win():
     if(len(bot.ALIVE_PLAYERS) == 1):
         bot.WINNER = bot.ALIVE_PLAYERS[0].role
         return True
+    elif(len(bot.ALIVE_PLAYERS) == 2 and bot.ALIVE_PLAYERS[0] in bot.AMOUREUX):
+        bot.WINNER = "Amoureux"
+        return True
     elif(not still_loups):
         # TODO: change this in funct of roles
         bot.WINNER = "Villageois"
@@ -542,6 +584,17 @@ async def vote(ctx, choice: int):
                 await vote_mecanism(choice, currentPlayer, bot.HISTORY_TEXT_CHANNEL, bot.MAYOR_ONLY_CHOICES)
                 return
 
+    if(bot.TURN == "CUPIDON"):
+        # if current_player is a chasseur
+        if(isinstance(currentPlayer.role, Cupidon)):
+            if(len(currentPlayer.role.targets_choice) < 2):
+                if(choice >= 0 and choice < len(bot.ALIVE_PLAYERS) and bot.ALIVE_PLAYERS[choice] not in currentPlayer.role.targets_choice):
+                    currentPlayer.role.targets_choice.append(
+                        bot.ALIVE_PLAYERS[choice])
+                    await currentPlayer.private_channel.send(
+                        f"\n\n**Vous avez choisi {bot.ALIVE_PLAYERS[choice]}**\n\n")
+                    return
+
     if(bot.TURN == "VOYANTE"):
         # if current_player is a voyante
         if(isinstance(currentPlayer.role, Voyante)):
@@ -564,6 +617,16 @@ async def vote(ctx, choice: int):
                     currentPlayer.role.target_choice = bot.ALIVE_PLAYERS[choice]
                     currentPlayer.role.deathPotion = False
                     await currentPlayer.private_channel.send(f"\n\n**Vous avez choisi d'empoisonner {currentPlayer.role.target_choice}**\n\n")
+                    return
+
+    if(bot.TURN == "CHASSEUR"):
+        # if current_player is a chasseur
+        if(isinstance(currentPlayer.role, Chasseur)):
+            if(currentPlayer.role.target_choice == None):
+                if(choice >= 0 and choice < len(bot.ALIVE_PLAYERS)):
+                    currentPlayer.role.target_choice = bot.ALIVE_PLAYERS[choice]
+                    await bot.HISTORY_TEXT_CHANNEL.send(
+                        f"\n\n**Vous avez choisi {currentPlayer.role.target_choice}**\n\n")
                     return
 
 
@@ -609,6 +672,74 @@ async def vote_mecanism(choice, currentPlayer, channel, targets_table):
 
     # await asyncio.sleep(TIME_DELETE_MSG)
     # await ctx.message.delete()
+
+
+async def cupidon_turn():
+    await bot.HISTORY_TEXT_CHANNEL.send(f'Cupidon a {TIME_FOR_CUPIDON} secondes pour choisir les amoureux\n\n')
+    bot.TURN = "CUPIDON"
+
+    # search chasseur
+    cupidon = None
+    for player in bot.ALIVE_PLAYERS:
+        if(isinstance(player.role, Cupidon)):
+            cupidon = player
+            break
+
+    if(cupidon == None):
+        print("error in cupidon turn: cupidon = None")
+        raise ValueError
+
+    await cupidon.private_channel.send(f'Vous avez {TIME_FOR_CUPIDON} secondes pour choisir les amoureux\n\n')
+
+    message = ""
+    num = 0
+    for player in bot.ALIVE_PLAYERS:
+        message += f'{num}:  {player}\n'
+        num += 1
+    message += '\ncommande: !vote <int>\n'
+    message += 'exemple: !vote 5\n'
+    await cupidon.private_channel.send(message)
+
+    time_left = int(TIME_FOR_CUPIDON)
+    await asyncio.sleep(time_left - 5)
+    time_left = 5
+    await cupidon.private_channel.send(f'{time_left} secondes restantes')
+    await asyncio.sleep(time_left)
+
+    bot.TURN = "FIN_CUPIDON"
+
+    if(len(cupidon.role.targets_choice) == 0):
+        rand_index = random.randint(0, len(bot.ALIVE_PLAYERS) - 1)
+        cupidon.role.targets_choice.append(
+            bot.ALIVE_PLAYERS[rand_index])
+
+        rand_index2 = rand_index
+        while(rand_index2 == rand_index):
+            rand_index2 = random.randint(0, len(bot.ALIVE_PLAYERS) - 1)
+
+        cupidon.role.targets_choice.append(
+            bot.ALIVE_PLAYERS[rand_index2])
+
+    if(len(cupidon.role.targets_choice) == 1):
+        target = cupidon.role.targets_choice[0]
+        while(target in cupidon.role.targets_choice):
+            rand_index = random.randint(0, len(bot.ALIVE_PLAYERS) - 1)
+            target = bot.ALIVE_PLAYERS[rand_index]
+        cupidon.role.targets_choice.append(bot.ALIVE_PLAYERS[rand_index])
+
+    bot.AMOUREUX = cupidon.role.targets_choice
+
+    # warn of the choice
+    message = f'\n**Votre choix est fait, les amoureux sont: {bot.AMOUREUX[0]} et {bot.AMOUREUX[1]}**\n'
+    await cupidon.private_channel.send(message)
+
+    # send message to the amoureux
+    message = f'\n**Vous êtes amoureux avec : {bot.AMOUREUX[1]}**\n'
+    await bot.AMOUREUX[0].private_channel.send(message)
+    message = f'\n**Vous êtes amoureux avec : {bot.AMOUREUX[0]}**\n'
+    await bot.AMOUREUX[1].private_channel.send(message)
+
+    await asyncio.sleep(4)
 
 
 async def voyantes_turn():
@@ -847,6 +978,46 @@ async def sorcière_play(sorcière):
     else:
         time_left = int(TIME_FOR_SORCIERE/2)
         await asyncio.sleep(time_left)
+
+
+async def chasseur_turn():
+    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Le chasseur a {TIME_FOR_LOUPS} secondes pour choisir sa victime**\n\n')
+    bot.TURN = "CHASSEUR"
+
+    # search chasseur
+    chasseur = None
+    for player in bot.DEADS:
+        if(isinstance(player.role, Chasseur)):
+            chasseur = player
+            break
+
+    if(chasseur == None):
+        print("error in chasseur turn: chasseur = None")
+        raise ValueError
+
+    message = ""
+    num = 0
+    for player in bot.ALIVE_PLAYERS:
+        message += f'{num}:  {player}\n'
+        num += 1
+    message += '\ncommande: !vote <int>\n'
+    message += 'exemple: !vote 5\n'
+    await bot.HISTORY_TEXT_CHANNEL.send(message)
+
+    time_left = int(TIME_FOR_CHASSEUR)
+    await asyncio.sleep(time_left - 5)
+    time_left = 5
+    await bot.HISTORY_TEXT_CHANNEL.send(f'{time_left} secondes restantes')
+    await asyncio.sleep(time_left)
+
+    bot.TURN = "FIN_CHASSEUR"
+
+    if(chasseur.role.target_choice == None):
+        rand_index = random.randint(0, len(bot.ALIVE_PLAYERS) - 1)
+        chasseur.role.target_choice = bot.ALIVE_PLAYERS[rand_index]
+
+    # warn of the choice
+    await bot.HISTORY_TEXT_CHANNEL.send(f'\n**votre choix est fait, vous avez choisi de tuer cette personne: {chasseur.role.target_choice}**\n')
 
 
 async def election():
@@ -1211,6 +1382,42 @@ async def assign_nb_sorcière(ctx, number_of: int):
         await ctx.send(message)
 
 
+@bot.command(name='chasseur', help="configure le nombre de chasseurs pour la partie (0 ou 1)")
+@commands.has_role(MASTER_OF_THE_GAME)
+async def assign_nb_chasseur(ctx, number_of: int):
+    if(bot.GAME_CREATED == False):
+        await ctx.send('aucune partie créée')
+        return
+    if(bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé')
+        return
+
+    if(number_of == 0 or number_of == 1):
+        bot.NB_CHASSEUR = number_of
+        roles = await calc_roles(verbose=True)
+        print(roles)
+        message = f'\n{roles}\n'
+        await ctx.send(message)
+
+
+@bot.command(name='cupidon', help="configure le nombre de cupidon pour la partie (0 ou 1)")
+@commands.has_role(MASTER_OF_THE_GAME)
+async def assign_nb_cupidon(ctx, number_of: int):
+    if(bot.GAME_CREATED == False):
+        await ctx.send('aucune partie créée')
+        return
+    if(bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé')
+        return
+
+    if(number_of == 0 or number_of == 1):
+        bot.NB_CUPIDON = number_of
+        roles = await calc_roles(verbose=True)
+        print(roles)
+        message = f'\n{roles}\n'
+        await ctx.send(message)
+
+
 @bot.command(name='roles', help="montre les roles choisis pour la partie")
 @commands.has_role(MASTER_OF_THE_GAME)
 async def show_roles(ctx):
@@ -1377,6 +1584,7 @@ async def create_game_category(ctx):
             player.private_channel = await game_category.create_text_channel(PRIVATE_TEXT_CHANNEL_NAME, overwrites=overwrites)
         # setattr(player,'PRIVATE_CHANNEL', private_channel)
         print(player)
+        await player.private_channel.send(file=discord.File('images/' + player.role.image_filename))
         await player.private_channel.send(player.role.display_role())
 
 
@@ -1407,8 +1615,17 @@ async def calc_roles(verbose):
     for _ in range(nb_sorcière):
         roles.append(Sorcière())
 
+    nb_chasseur = bot.NB_CHASSEUR
+    for _ in range(nb_chasseur):
+        roles.append(Chasseur())
+
+    nb_cupidon = bot.NB_CUPIDON
+    for _ in range(nb_cupidon):
+        roles.append(Cupidon())
+
     # TODO: Here add the substraction of the nb of special role
-    nb_villageois = nb_players - nb_loup - nb_voyante - nb_ange - nb_sorcière
+    nb_villageois = nb_players - nb_loup - nb_voyante - \
+        nb_ange - nb_sorcière - nb_chasseur - nb_cupidon
 
     if(nb_villageois < 0):
         print('nb_villageois < 0')
@@ -1439,6 +1656,10 @@ async def calc_roles(verbose):
             message += f"ange: {nb_ange}\n"
         if(nb_sorcière != 0):
             message += f'sorcière: {nb_sorcière}\n'
+        if(nb_chasseur != 0):
+            message += f'chasseur: {nb_chasseur}\n'
+        if(nb_cupidon != 0):
+            message += f'cupidon: {nb_cupidon}\n'
         return message
     else:
         return roles

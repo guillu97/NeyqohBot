@@ -8,48 +8,55 @@ class Role:
 
 class LoupGarou(Role):
     def __init__(self):
-        self.roleName = "Loup Garou"
-        self.description = "Un loup normal"
+        self.roleName = "Loup-Garou"
+        self.description = "Son objectif est d'éliminer tous les innocents (ceux qui ne sont pas Loups-Garous). Chaque nuit, il se réunit avec ses compères Loups pour décider d'une victime à éliminer..."
+        self.image_filename = "loup-garou.png"
+
 
 
 class Villageois(Role):
     def __init__(self):
-        self.roleName = "Villageois"
-        self.description = "Un villageaois normal"
+        self.roleName = "Simple Villageois"
+        self.description = "Son objectif est d'éliminer tous les Loups-Garous. Il ne dispose d'aucun pouvoir particulier : uniquement sa perspicacité et sa force de persuasion."
+        self.image_filename = "villageois.png"
 
 
 class Voyante(Villageois):
     def __init__(self):
         self.roleName = "Voyante"
-        self.description = "Une voyante qui peut voir"
+        self.description = "Son objectif est d'éliminer tous les Loups-Garous. Chaque nuit, elle peut espionner un joueur et découvrir sa véritable identité..."
+        self.image_filename = "voyante.png"
         self.targets = []
-
-
-class Ange(Villageois):
-    def __init__(self):
-        self.roleName = "Ange"
-        self.description = "Un ange malicieux"
 
 
 class Sorcière(Villageois):
     def __init__(self):
         self.roleName = "Sorcière"
-        self.description = "Une sorcière avec 2 potions, une de vie et une de mort"
+        self.description = "Son objectif est d'éliminer tous les Loups-Garous. Elle dispose de deux potions : une potion de vie pour sauver la victime des Loups, et une potion de mort pour assassiner quelqu'un."
+        self.image_filename = "sorcière.png"
         self.lifePotion = True
         self.deathPotion = True
         self.target_choice = None
 
 
-# TODO:
-
-
 class Chasseur(Villageois):
     def __init__(self):
         self.roleName = "Chasseur"
-        self.description = "Un chasseur avec un fusil"
+        self.description = "Son objectif est d'éliminer tous les Loups-Garous. A sa mort, il doit éliminer un joueur en utilisant sa dernière balle..."
+        self.image_filename = "chasseur.png"
+        self.target_choice = None
+
+
+class Ange(Villageois):
+    def __init__(self):
+        self.roleName = "Ange"
+        self.description = "Son objectif est d'être éliminé par le village lors du premier vote de jour. S'il réussit, il gagne la partie. Sinon, il devient un Simple Villageois."
+        self.image_filename = "ange.png"
 
 
 class Cupidon(Villageois):
     def __init__(self):
         self.roleName = "Cupidon"
-        self.description = "Un cupidon qui fait des amoureux"
+        self.description = "Son objectif est d'éliminer tous les Loups-Garous. Dès le début de la partie, il doit former un couple de deux joueurs. Leur objectif sera de survivre ensemble, car si l'un d'eux meurt, l'autre se suicidera."
+        self.image_filename = "cupidon.png"
+        self.targets_choice = []
