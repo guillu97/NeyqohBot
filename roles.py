@@ -67,3 +67,12 @@ class Cupidon(Villageois):
         self.description = "Son objectif est d'éliminer tous les Loups-Garous. Dès le début de la partie, il doit former un couple de deux joueurs. Leur objectif sera de survivre ensemble, car si l'un d'eux meurt, l'autre se suicidera."
         self.image_filename = "cupidon.png"
         self.targets_choice = []
+
+# TODO:
+
+
+class Salvateur(Villageois):
+    self.roleName = "Salvateur"
+    self.description = "Son objectif est d'éliminer tous les Loups-Garous. Chaque nuit, il peut protéger quelqu'un de l'attaque des Loups-Garous..."
+    self.image_filename = "salvateur.png"
+    self.target_choice = None
