@@ -47,3 +47,9 @@ class Chasseur(Villageois):
     def __init__(self):
         self.roleName = "Chasseur"
         self.description = "Un chasseur avec un fusil"
+
+
+class Cupidon(Villageois):
+    def __init__(self):
+        self.roleName = "Cupidon"
+        self.description = "Un cupidon qui fait des amoureux"
