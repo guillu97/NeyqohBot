@@ -1,4 +1,11 @@
+import os
+from dotenv import load_dotenv
+
 ### CONSTANTS ###
+
+load_dotenv()
+TOKEN = os.getenv('DISCORD_TOKEN')
+GUILD = os.getenv('DISCORD_GUILD')
 
 COMMANDS_PREFIX = "!"
 
@@ -34,7 +41,7 @@ TIME_AUTO_DESTRUCT = 120  # TODO: 30 in prod
 
 NB_MAX_MAYOR_ELECTIONS = 3
 
-NB_MAX_VICTIM_ELECTIONS = 3
+#NB_MAX_VICTIM_ELECTIONS = 3
 
 MINIMUM_PLAYER_NB = 2  # TODO: in prod : 4 players min
 

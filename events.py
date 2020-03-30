@@ -1,4 +1,4 @@
-from singleton import Singleton
+from data_struct.singleton import Singleton
 from discord.ext import commands
 bot = Singleton()
 

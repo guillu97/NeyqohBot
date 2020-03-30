@@ -13,11 +13,12 @@ class Singleton(object):
             cls._instance = commands.Bot(
                 command_prefix=constant.COMMANDS_PREFIX)
             cls.default_values(cls._instance)
+            cls._instance.default_values = cls.default_values
 
         return cls._instance
 
-    def default_values(_instance):
 
+    def default_values(_instance):
         _instance.GAME_CREATED = False
         _instance.GAME_STARTED = False
         _instance.PLAYERS = []

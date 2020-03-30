@@ -1,4 +1,4 @@
-from player import Player
+from data_struct.player import Player
 
 
 class Target:
