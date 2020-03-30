@@ -5,135 +5,26 @@ import random
 import time
 import asyncio
 
+from dotenv import load_dotenv
+
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
+
+from singleton import Singleton
 
 from player import Player
 from roles import *
 
 from target import Target
 
+import constant
+import events
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
-### CONSTANTS ###
-MASTER_OF_THE_GAME = 'Maitre du jeu'
-
-GAME_CATEGORY_NAME = "Neyqoh_Game"
-GAME_VOICE_CHANNEL_NAME = "Place du village"
-HISTORY_TEXT_CHANNEL_NAME = "Histoire"
-PRIVATE_TEXT_CHANNEL_NAME = 'Ton role et actions'
-LOUPS_TEXT_CHANNEL_NAME = 'Loups Garous'
-
-TIME_FOR_ROLES = 10
-TIME_FOR_LOUPS = 10
-TIME_FOR_LOUP_BLANC = 20
-TIME_FOR_MAYOR_ELECTION = 10  # TODO: 120 in prod
-
-TIME_FOR_VICTIM_ELECTION = 10  # TODO: 120 in prod
-TIME_FOR_MAYOR_FINAL_CHOICE = 10  # TODO: 10 - 20 secs in prod
-
-TIME_FOR_MAYOR_GIVE_UP = 10  # TODO in prod 30 s
-
-TIME_FOR_CUPIDON = 20
-
-TIME_FOR_VOYANTE = 10  # TODO 20 - 30 secs in prod
-
-TIME_FOR_SORCIERE = 50
-
-TIME_FOR_CHASSEUR = 25
-
-TIME_DELETE_MSG = 0
-
-TIME_AUTO_DESTRUCT = 120  # TODO: 30 in prod
-
-NB_MAX_MAYOR_ELECTIONS = 3
-
-NB_MAX_VICTIM_ELECTIONS = 3
-
-MINIMUM_PLAYER_NB = 2  # TODO: in prod : 4 players min
-
-DEFAULT_NB_LOUP = 1000  # if nb > nb_players => nb = nb_players/4
-
-DEFAULT_NB_LOUP_BLANC = 1
-
-DEFAULT_NB_CUPIDON = 0
-
-DEFAULT_NB_VOYANTE = 0
-
-DEFAULT_NB_SORCIERE = 0
-
-DEFAULT_NB_CHASSEUR = 0
-
-MAX_NB_ANGE = 1
-###
-
-
-def default_values(bot):
-    bot.GAME_CREATED = False
-    bot.GAME_STARTED = False
-    bot.PLAYERS = []
-    bot.DEADS_OF_NIGHT = []
-    bot.DEADS_OF_DAY = []
-    bot.DEADS = []
-    bot.LOUPS = []
-    bot.ALIVE_PLAYERS = []
-    bot.LOUP_TARGETS = []
-    bot.MAYOR_TARGETS = []
-    bot.MAYOR_CHOICES = []
-    bot.MAYOR_ONLY_CHOICES = []
-    bot.VICTIM_TARGETS = []
-
-    bot.AMOUREUX = []
-
-    # bot.SORCIERE_SAVE = False
-    # bot.SORCIERE_KILL = None
-
-    bot.WINNER = None
-
-    bot.LOUP_FINAL_TARGET = None
-    bot.MAYOR = None
-    bot.VICTIM = None
-
-    bot.MINIMUM_PLAYER_NB = MINIMUM_PLAYER_NB
-    bot.NB_LOUP = DEFAULT_NB_LOUP
-    bot.NB_LOUP_BLANC = DEFAULT_NB_LOUP_BLANC
-    bot.NB_CUPIDON = DEFAULT_NB_CUPIDON
-    bot.NB_VOYANTE = DEFAULT_NB_VOYANTE
-    bot.NB_SORCIERE = DEFAULT_NB_SORCIERE
-    bot.NB_CHASSEUR = DEFAULT_NB_CHASSEUR
-    bot.NB_ANGE = 0
-
-    bot.ALLOW_MORE_ROLES = False
-
-    bot.NB_NIGHTS = 1
-
-    bot.TURN = ""
-
-    # bot.PAUSE = False
-
-
-bot = commands.Bot(command_prefix='!')
-
-default_values(bot)
-
-
-# on ready function: when the bot connects to the server
-@bot.event
-async def on_ready():
-    # the bot user is connected to Discord
-    print(f'{bot.user.name} has connected to Discord!')
-
-
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.errors.CheckFailure):
-        await ctx.send('You do not have the correct role for this command.')
-    print(error)
-    # raise
+bot = Singleton()
 
 
 @bot.command(name='99', help='Responds with a random quote from Brooklyn 99')
@@ -171,7 +62,7 @@ async def create_channel(ctx, channel_name='real-python'):
 
 
 @bot.command(name='new', help='crée une nouvelle partie')
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def new_game(ctx):
     if(bot.GAME_CREATED == True):
         await ctx.send('Une partie est déjà créée')
@@ -239,7 +130,7 @@ async def join_game(ctx):
 
 
 @bot.command(name='stop', help='stop la partie en cours')
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def stop_game(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie en cours')
@@ -247,11 +138,11 @@ async def stop_game(ctx):
 
     await ctx.send('arret de la partie en cours')
     await delete_game_category(ctx)
-    default_values(bot)
+    bot.default_values()
 
 
 @bot.command(name='delete', help="supprime les categrory du jeu si aucune partie n'est en cours")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def delete_channels(ctx):
     if(bot.GAME_CREATED == True):
         await ctx.send('une partie a été créée')
@@ -265,7 +156,7 @@ async def delete_channels(ctx):
 
 
 @bot.command(name='start', help='commence la partie avec toutes les personnes ayant effectuées !join')
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def start_game(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -311,10 +202,10 @@ async def start_game(ctx):
 async def game_process(ctx):
 
     await bot.HISTORY_TEXT_CHANNEL.send(
-        f'\n\n**Vous avez {TIME_FOR_ROLES} secondes pour regarder vos rôles avant que la partie commence**\n\n')
+        f'\n\n**Vous avez {constant.TIME_FOR_ROLES} secondes pour regarder vos rôles avant que la partie commence**\n\n')
     bot.TURN = "ROLES"
     # wait the time that the people check their roles
-    await asyncio.sleep(TIME_FOR_ROLES)
+    await asyncio.sleep(constant.TIME_FOR_ROLES)
     # while(not someone win or draw)
     while(True):
         await bot.HISTORY_TEXT_CHANNEL.send(f'la nuit **{bot.NB_NIGHTS}** tombe')
@@ -696,10 +587,11 @@ async def vote_mecanism(choice, currentPlayer, channel, targets_table):
     previous_target = None
     for target in targets_table:
         for accusator in target.accusators:
-            if(currentPlayer.discordMember == accusator.discordMember):
-                # the player is already an accusator
-                previous_target = target
-                break
+            if(accusator != None):
+                if(currentPlayer.discordMember == accusator.discordMember):
+                    # the player is already an accusator
+                    previous_target = target
+                    break
     if(previous_target):
         previous_target.accusators.remove(currentPlayer)
         # check if target is now at 0 accusator to remove it from the targets
@@ -821,8 +713,7 @@ async def voyante_play(voyante):
 
     num = 0
     for player in bot.ALIVE_PLAYERS:
-        member = player.discordMember
-        message += f'{num}:  {member.display_name}\n'
+        message += f'{num}:  {player}\n'
         num += 1
     message += '\ncommande: !vote <int>\n'
     message += 'exemple: !vote 5\n'
@@ -855,7 +746,7 @@ async def voyante_play(voyante):
 async def loups_turn():
 
     # warn village
-    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Les loups garous ont {TIME_FOR_LOUPS} secondes pour choisir leur victime de la nuit**\n\n')
+    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Les loups garous ont {constant.TIME_FOR_LOUPS} secondes pour choisir leur victime de la nuit**\n\n')
     bot.TURN = "LOUPS"
 
     # make channel accessible
@@ -866,7 +757,7 @@ async def loups_turn():
             member, send_messages=True, read_messages=True)
 
     # warn loups garou
-    message = f'Vous avez {TIME_FOR_LOUPS} secondes pour choisir votre victime de la nuit\n\n'
+    message = f'Vous avez {constant.TIME_FOR_LOUPS} secondes pour choisir votre victime de la nuit\n\n'
     time_left = TIME_FOR_LOUPS
 
     num = 0
@@ -1091,7 +982,7 @@ async def sorcière_play(sorcière):
 
 
 async def chasseur_turn():
-    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Le chasseur a {TIME_FOR_LOUPS} secondes pour choisir sa victime**\n\n')
+    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Le chasseur a {constant.TIME_FOR_CHASSEUR} secondes pour choisir sa victime**\n\n')
     bot.TURN = "CHASSEUR"
 
     # search chasseur
@@ -1409,7 +1300,7 @@ async def mayor_choice():
 
 
 @bot.command(name='loup', help='configure le nombre de loups pour la partie')
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_loup(ctx, number_of_loups: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1438,7 +1329,7 @@ async def assign_nb_loup(ctx, number_of_loups: int):
 
 
 @bot.command(name='loupBlanc', help="configure le nombre de loup-garou blanc pour la partie: 0 ou 1")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_loupBlanc(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1456,7 +1347,7 @@ async def assign_nb_loupBlanc(ctx, number_of: int):
 
 
 @bot.command(name='ange', help="configure le nombre d'ange pour la partie: 0 ou 1")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_ange(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1474,7 +1365,7 @@ async def assign_nb_ange(ctx, number_of: int):
 
 
 @bot.command(name='voyante', help="configure le nombre de voyantes pour la partie (0 ou plus)")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_voyante(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1492,7 +1383,7 @@ async def assign_nb_voyante(ctx, number_of: int):
 
 
 @bot.command(name='sorcière', help="configure le nombre de sorcières pour la partie (0 ou plus)")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_sorcière(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1510,7 +1401,7 @@ async def assign_nb_sorcière(ctx, number_of: int):
 
 
 @bot.command(name='chasseur', help="configure le nombre de chasseurs pour la partie (0 ou 1)")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_chasseur(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1528,7 +1419,7 @@ async def assign_nb_chasseur(ctx, number_of: int):
 
 
 @bot.command(name='cupidon', help="configure le nombre de cupidon pour la partie (0 ou 1)")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_cupidon(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1546,7 +1437,7 @@ async def assign_nb_cupidon(ctx, number_of: int):
 
 
 @bot.command(name='roles', help="montre les roles choisis pour la partie")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def show_roles(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1561,7 +1452,7 @@ async def show_roles(ctx):
 
 
 @bot.command(name='players', help="montre les joueurs actuellement dans la partie")
-# @commands.has_role(MASTER_OF_THE_GAME)
+# @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def show_players(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1574,7 +1465,7 @@ async def show_players(ctx):
 
 
 @bot.command(name='players-alive', help="montre les joueurs actuellement dans la partie")
-# @commands.has_role(MASTER_OF_THE_GAME)
+# @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def show_players_alive(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1591,7 +1482,7 @@ async def show_players_alive(ctx):
 
 
 @bot.command(name='allow-more-roles', help="autorise le fait d'ajouter plus de roles que de joueurs présents dans la partie")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def allow_more_roles(ctx, boolean: bool):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1608,7 +1499,7 @@ async def allow_more_roles(ctx, boolean: bool):
 
 
 @bot.command(name='pause', help="met en pause le bot pendant un nombre de secondes donné")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def pause_game(ctx, pause_time: int = 30):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1631,7 +1522,7 @@ async def pause_game(ctx, pause_time: int = 30):
 
 """
 @bot.command(name='resume', help="continue la partie s'il y avait une pause")
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def pause_game(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1651,7 +1542,7 @@ async def pause_game(ctx):
 
 
 @bot.command(name='min-players', help='configure le nombre de joueurs minimums pour la partie')
-@commands.has_role(MASTER_OF_THE_GAME)
+@commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_min_players(ctx, min_number_of_players: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
@@ -1670,19 +1561,19 @@ async def create_game_category(ctx):
 
     # create the game category, it will overwrite an existing one
     category_exists = discord.utils.get(
-        guild.categories, name=GAME_CATEGORY_NAME)
+        guild.categories, name=constant.GAME_CATEGORY_NAME)
     if category_exists:
         await delete_game_category(ctx)
     # create a category for the game
-    game_category = await guild.create_category(GAME_CATEGORY_NAME)
+    game_category = await guild.create_category(constant.GAME_CATEGORY_NAME)
     bot.GAME_CATEGORY = game_category
-    print(f'Creating a new category: {GAME_CATEGORY_NAME}')
+    print(f'Creating a new category: {constant.GAME_CATEGORY_NAME}')
 
     # create the history text channel
-    bot.HISTORY_TEXT_CHANNEL = await game_category.create_text_channel(name=HISTORY_TEXT_CHANNEL_NAME)
+    bot.HISTORY_TEXT_CHANNEL = await game_category.create_text_channel(name=constant.HISTORY_TEXT_CHANNEL_NAME)
 
     # create the game voice channel
-    bot.GAME_VOICE_CHANNEL = await game_category.create_voice_channel(name=GAME_VOICE_CHANNEL_NAME)
+    bot.GAME_VOICE_CHANNEL = await game_category.create_voice_channel(name=constant.GAME_VOICE_CHANNEL_NAME)
 
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False)
@@ -1693,7 +1584,7 @@ async def create_game_category(ctx):
     #    overwrites[member] = discord.PermissionOverwrite(read_messages=True)
 
     # TODO: create loup garou only channel
-    bot.LOUPS_TEXT_CHANNEL = await game_category.create_text_channel(LOUPS_TEXT_CHANNEL_NAME, overwrites=overwrites)
+    bot.LOUPS_TEXT_CHANNEL = await game_category.create_text_channel(constant.LOUPS_TEXT_CHANNEL_NAME, overwrites=overwrites)
 
     # for each player create a secret text channel
     for player in bot.PLAYERS:
@@ -1706,9 +1597,9 @@ async def create_game_category(ctx):
         }
 
         if(member.guild_permissions.administrator):
-            player.private_channel = await game_category.create_text_channel(PRIVATE_TEXT_CHANNEL_NAME + "_admin_" + member.display_name, overwrites=overwrites)
+            player.private_channel = await game_category.create_text_channel(constant.PRIVATE_TEXT_CHANNEL_NAME + "_admin_" + member.display_name, overwrites=overwrites)
         else:
-            player.private_channel = await game_category.create_text_channel(PRIVATE_TEXT_CHANNEL_NAME, overwrites=overwrites)
+            player.private_channel = await game_category.create_text_channel(constant.PRIVATE_TEXT_CHANNEL_NAME, overwrites=overwrites)
         # setattr(player,'PRIVATE_CHANNEL', private_channel)
         print(player)
         await player.private_channel.send(file=discord.File('images/' + player.role.image_filename))

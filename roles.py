@@ -71,8 +71,10 @@ class Cupidon(Villageois):
 # TODO:
 
 
+"""
 class Salvateur(Villageois):
     self.roleName = "Salvateur"
     self.description = "Son objectif est d'éliminer tous les Loups-Garous. Chaque nuit, il peut protéger quelqu'un de l'attaque des Loups-Garous..."
     self.image_filename = "salvateur.png"
     self.target_choice = None
+"""
