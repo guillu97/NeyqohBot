@@ -1,11 +1,17 @@
-from data_struct.singleton import Singleton
+
 from discord.ext import commands
+from discord import Emoji
+from discord import *
 import random
+import asyncio
 import constant
 from channels_process import create_game_category, delete_game_category
 from roles_compute import calc_roles, assign_roles
 from game_process import game_process, stop_game
 from data_struct.player import Player
+from data_struct.singleton import Singleton
+from data_struct.roles import *
+
 bot = Singleton()
 
 
@@ -30,6 +36,7 @@ async def new_game(ctx):
 
     # save the channel where the new was typed
     bot.BEGINNING_CHANNEL = ctx.message.channel
+
 
 @bot.command(name='stop', help='stop la partie en cours')
 @commands.has_role(constant.MASTER_OF_THE_GAME)
@@ -213,6 +220,7 @@ async def assign_nb_chasseur(ctx, number_of: int):
         message = f'\n{roles}\n'
         await ctx.send(message)
 
+
 @bot.command(name='cupidon', help="configure le nombre de cupidon pour la partie (0 ou 1)")
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_cupidon(ctx, number_of: int):
@@ -230,6 +238,7 @@ async def assign_nb_cupidon(ctx, number_of: int):
         message = f'\n{roles}\n'
         await ctx.send(message)
 
+
 @bot.command(name='roles', help="montre les roles choisis pour la partie")
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def show_roles(ctx):
@@ -243,6 +252,7 @@ async def show_roles(ctx):
     print(roles)
     message = f'\n{roles}\n'
     await ctx.send(message)
+
 
 @bot.command(name='allow-more-roles', help="autorise le fait d'ajouter plus de roles que de joueurs présents dans la partie")
 @commands.has_role(constant.MASTER_OF_THE_GAME)
@@ -316,3 +326,43 @@ async def assign_min_players(ctx, min_number_of_players: int):
 
     bot.MINIMUM_PLAYER_NB = min_number_of_players
     await ctx.send(f'nombre de joueurs minimum: {bot.MINIMUM_PLAYER_NB}')
+
+
+@bot.command(name='test', help='test')
+@commands.has_role(constant.MASTER_OF_THE_GAME)
+async def vote(ctx):
+    if(bot.GAME_CREATED == False):
+        await ctx.send('aucune partie créée')
+        return
+    if(bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé')
+        return
+    messages = []
+    for player in bot.PLAYERS:
+        message = await ctx.send(f'{player.discordMember.mention}')
+        await message.add_reaction(emoji=u"�")
+        messages.append(message)
+    targets_choice = await find_targets(ctx, messages)
+    target_choice = None
+    if(len(targets_choice) == 1):
+        target_choice = targets_choice[0]
+    if(target_choice != None):
+        await ctx.send(f'{target_choice.mention} est la cible')
+
+
+async def find_targets(ctx, context_messages):
+    ids = [message.id for message in context_messages]
+    await asyncio.sleep(10)
+    msg = None
+    emojisCount = {}
+    target = None
+    async for message in ctx.channel.history(limit=100):
+        if message.id in ids:
+            emojisCount[message.mentions[0]] = sum(
+                [reaction.count for reaction in message.reactions])
+    print(emojisCount)
+    maximum = max(emojisCount.values())
+    targets_choice = [key for key,
+                      value in emojisCount.items() if value == maximum and value != 0]
+
+    return targets_choice

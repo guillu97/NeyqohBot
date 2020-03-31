@@ -1,4 +1,6 @@
 class Role:
+    emoji = None
+
     def __str__(self):
         return self.roleName
 
@@ -10,14 +12,14 @@ class LoupGarou(Role):
     def __init__(self):
         self.roleName = "Loup-Garou"
         self.description = "Son objectif est d'éliminer tous les innocents (ceux qui ne sont pas Loups-Garous). Chaque nuit, il se réunit avec ses compères Loups pour décider d'une victime à éliminer..."
-        self.image_filename = "loup-garou.png"
+        self.image_filename = "loup_garou.png"
 
 
 class LoupBlanc(LoupGarou):
     def __init__(self):
         self.roleName = "Loup-Garou Blanc"
         self.description = "Son objectif est de terminer SEUL la partie. Les autres Loups-Garous croient qu'il est un loup normal, mais une nuit sur deux il peut assassiner un loup de son choix..."
-        self.image_filename = "loupBlanc.png"
+        self.image_filename = "loup_garou_blanc.png"
         self.target_choice = None
 
 
@@ -71,10 +73,9 @@ class Cupidon(Villageois):
 # TODO:
 
 
-"""
 class Salvateur(Villageois):
-    self.roleName = "Salvateur"
-    self.description = "Son objectif est d'éliminer tous les Loups-Garous. Chaque nuit, il peut protéger quelqu'un de l'attaque des Loups-Garous..."
-    self.image_filename = "salvateur.png"
-    self.target_choice = None
-"""
+    def __init__(self):
+        self.roleName = "Salvateur"
+        self.description = "Son objectif est d'éliminer tous les Loups-Garous. Chaque nuit, il peut protéger quelqu'un de l'attaque des Loups-Garous..."
+        self.image_filename = "salvateur.png"
+        self.target_choice = None

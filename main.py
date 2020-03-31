@@ -10,5 +10,6 @@ import commands.players_commands
 
 bot = Singleton()
 
+
 if __name__ == "__main__":
     bot.run(constant.TOKEN)

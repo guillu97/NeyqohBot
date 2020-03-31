@@ -17,7 +17,6 @@ class Singleton(object):
 
         return cls._instance
 
-
     def default_values(_instance):
         _instance.GAME_CREATED = False
         _instance.GAME_STARTED = False
