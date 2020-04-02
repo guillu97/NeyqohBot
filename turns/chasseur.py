@@ -3,9 +3,10 @@ from discord.ext import commands
 import random
 import asyncio
 import constant
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 
-bot = Singleton()
+bot = Bot()
+
 
 async def chasseur_turn():
     await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Le chasseur a {constant.TIME_FOR_CHASSEUR} secondes pour choisir sa victime**\n\n')

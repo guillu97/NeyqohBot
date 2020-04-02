@@ -2,14 +2,15 @@ import discord
 from discord.ext import commands
 import asyncio
 import constant
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 from data_struct.player import Player
 from data_struct.roles import *
 from roles_compute import calc_roles, assign_roles
 from turns.vote import vote_mecanism
 from data_struct.target import Target
 
-bot = Singleton()
+bot = Bot()
+
 
 @bot.command(name='join', help='rejoindre une partie')
 # @commands.has_role(MASTER_OF_THE_GAME)
@@ -38,23 +39,18 @@ async def join_game(ctx):
         return
 
     bot.PLAYERS.append(Player(ctx.author))
-    nameList = [
-        player.discordMember.display_name for player in bot.PLAYERS]
 
     roles = await calc_roles(verbose=True)
     message_content = f'**{name} a rejoint la partie**\n\n'
     if(roles != None):
         print(roles)
-        message_content += f'joueurs: {nameList}\n\n'
+        message_content += f'joueurs: {" ".join(map(str,bot.PLAYERS))}\n\n'
         message_content += f'{roles}\n'
-
-        print(nameList)
 
     message = await ctx.send(message_content)
     # await asyncio.sleep(constant.TIME_DELETE_MSG)
     # await message.delete()
     # await ctx.message.delete()
-
 
 
 @bot.command(name='vote', help='vote pendant la partie')
@@ -178,13 +174,10 @@ async def show_players(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    nameList = [
-        player.discordMember.display_name for player in bot.PLAYERS]
-    print(nameList)
-    message = f'\n{nameList}\n'
-    await ctx.send(message)
+    await ctx.send("\n".join(map(str, bot.PLAYERS)))
 
 # TODO : create a command to known which roles are left
+
 
 @bot.command(name='players-alive', help="montre les joueurs vivants actuellement dans la partie")
 # @commands.has_role(constant.MASTER_OF_THE_GAME)
@@ -196,8 +189,4 @@ async def show_players_alive(ctx):
         await ctx.send("la partie n'a pas commencée")
         return
 
-    nameList = [
-        player.discordMember.display_name for player in bot.ALIVE_PLAYERS]
-    print(nameList)
-    message = f'\n{nameList}\n'
-    await ctx.send(message)
+    await ctx.send("\n".join(map(str, bot.ALIVE_PLAYERS)))

@@ -4,12 +4,12 @@ from discord.ext import commands
 import constant
 
 
-class Singleton(object):
+class Bot(object):
     _instance = None
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super(Singleton, cls).__new__(cls, *args, **kwargs)
+            cls._instance = super(Bot, cls).__new__(cls, *args, **kwargs)
             cls._instance = commands.Bot(
                 command_prefix=constant.COMMANDS_PREFIX)
             cls.default_values(cls._instance)
@@ -49,4 +49,5 @@ class Singleton(object):
         _instance.ALLOW_MORE_ROLES = False
         _instance.NB_NIGHTS = 1
         _instance.TURN = ""
-        # _instance.PAUSE = False
+        _instance.PAUSE_TASK = None
+        _instance.GAME_LOOP = None

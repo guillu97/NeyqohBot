@@ -3,9 +3,10 @@ from discord.ext import commands
 import asyncio
 import random
 import constant
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 
-bot = Singleton()
+bot = Bot()
+
 
 async def cupidon_turn():
     await bot.HISTORY_TEXT_CHANNEL.send(f'Cupidon a {constant.TIME_FOR_CUPIDON} secondes pour choisir les amoureux\n\n')

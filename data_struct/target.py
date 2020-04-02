@@ -18,16 +18,15 @@ class Target:
 
 
 class TargetEmoji:
-    def __init__(self, actual_num, player, accusator=None):
-        self.actual_num = actual_num
+    def __init__(self, player, accusators):
         self.player = player
-        self.accusators = [accusator]
-
-    def add_accusator(self, accusator):
-        self.accusators.append(accusator)
+        self.accusators = accusators
 
     def __str__(self):
         message = f"{len(self.accusators)} votes pour **{self.player}** :\t| "
         for accusator in self.accusators:
             message += f"*{accusator}* |\t"
         return message
+
+    def nb_accusators(self):
+        return len(self.accusators)

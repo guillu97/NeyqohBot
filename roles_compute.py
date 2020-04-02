@@ -3,9 +3,10 @@ from discord.ext import commands
 import random
 import constant
 from data_struct.roles import *
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 
-bot = Singleton()
+bot = Bot()
+
 
 async def calc_roles(verbose):
     nb_players = len(bot.PLAYERS)

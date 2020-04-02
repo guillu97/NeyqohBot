@@ -1,4 +1,4 @@
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 from discord.ext import commands
 import random
 import asyncio
@@ -18,8 +18,7 @@ from channels_process import delete_game_category
 
 
 import constant
-bot = Singleton()
-
+bot = Bot()
 
 
 async def game_process(ctx):
@@ -101,6 +100,8 @@ async def game_process(ctx):
                 bot.ALIVE_PLAYERS.remove(player)
         bot.DEADS_OF_NIGHT.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
+
+        # TODO: remove the permissions to write in history text channel of the deads : do this in a function that you are gonna paste multiple times
 
         await check_amoureux()
 
@@ -230,6 +231,7 @@ async def game_process(ctx):
     await asyncio.sleep(constant.TIME_AUTO_DESTRUCT)
     await stop_game(ctx)
 
+
 async def stop_game(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie en cours')
@@ -238,7 +240,6 @@ async def stop_game(ctx):
     await ctx.send('arret de la partie en cours')
     await delete_game_category(ctx)
     bot.default_values(bot)
-
 
 
 async def check_amoureux():
@@ -252,6 +253,7 @@ async def check_amoureux():
             bot.ALIVE_PLAYERS.remove(bot.AMOUREUX[0])
             bot.AMOUREUX.clear()
 
+
 async def still_something(check_class):
     # check if no more loup in game
     still = False
@@ -260,6 +262,7 @@ async def still_something(check_class):
             still = True
             break
     return still
+
 
 async def check_ange_win(table_deads_of_day):
     if(len(table_deads_of_day) == 1 and isinstance(table_deads_of_day[0].role, Ange)):
@@ -277,7 +280,7 @@ async def check_win():
     if(len(bot.ALIVE_PLAYERS) == 1):
         bot.WINNER = bot.ALIVE_PLAYERS[0].role
         return True
-    elif(len(bot.ALIVE_PLAYERS) == 2 and bot.ALIVE_PLAYERS[0] in bot.AMOUREUX):
+    elif(len(bot.ALIVE_PLAYERS) == 2 and bot.ALIVE_PLAYERS[0] in bot.AMOUREUX and bot.ALIVE_PLAYERS[0] in bot.AMOUREUX):
         bot.WINNER = "Amoureux"
         return True
     elif(not still_loups):

@@ -3,9 +3,10 @@ from discord.ext import commands
 import asyncio
 import constant
 from data_struct.roles import Voyante
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 
-bot = Singleton()
+bot = Bot()
+
 
 async def voyantes_turn():
     await bot.HISTORY_TEXT_CHANNEL.send(f'La voyante a {constant.TIME_FOR_VOYANTE} secondes pour choisir un joueur\n\n')

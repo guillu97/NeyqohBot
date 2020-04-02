@@ -1,7 +1,7 @@
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 from discord.ext import commands
 from create_emojis import create_emojis
-bot = Singleton()
+bot = Bot()
 
 # on ready function: when the bot connects to the server
 @bot.event

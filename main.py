@@ -1,5 +1,5 @@
 # main.py
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 
 import constant
 
@@ -8,7 +8,7 @@ import events
 import commands.master_commands
 import commands.players_commands
 
-bot = Singleton()
+bot = Bot()
 
 
 if __name__ == "__main__":

@@ -1,7 +1,8 @@
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 from discord.ext import commands
 import random
-bot = Singleton()
+bot = Bot()
+
 
 @bot.command(name='99', help='Responds with a random quote from Brooklyn 99')
 async def nine_nine(ctx):

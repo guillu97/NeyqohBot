@@ -1,9 +1,10 @@
 import discord
 from discord.ext import commands
 import constant
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 
-bot = Singleton()
+bot = Bot()
+
 
 async def create_game_category(ctx):
     # get guild (server)

@@ -2,9 +2,10 @@ import discord
 from discord.ext import commands
 import asyncio
 import constant
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 
-bot = Singleton()
+bot = Bot()
+
 
 async def sorcières_turn():
     await bot.HISTORY_TEXT_CHANNEL.send(f'La sorcière a {constant.TIME_FOR_SORCIERE} secondes pour choisir ses actions\n\n')

@@ -1,8 +1,8 @@
 
-from data_struct.singleton import Singleton
+from data_struct.bot import Bot
 import constant
 from data_struct.roles import *
-bot = Singleton()
+bot = Bot()
 
 
 async def create_emojis():
