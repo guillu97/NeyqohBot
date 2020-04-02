@@ -35,7 +35,6 @@ class Voyante(Villageois):
         self.roleName = "Voyante"
         self.description = "Son objectif est d'éliminer tous les Loups-Garous. Chaque nuit, elle peut espionner un joueur et découvrir sa véritable identité..."
         self.image_filename = "voyante.png"
-        self.targets = []
 
 
 class Sorcière(Villageois):

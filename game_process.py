@@ -45,7 +45,8 @@ async def game_process(ctx):
         # TODO : do a gather to make the above roles play at the same time
 
         ### wake loups ###
-        await loups_turn()
+        # for the moment but TODO: replace this by a local variable that you send to the loupBlanc and then the sorcière
+        bot.LOUP_FINAL_TARGET = await loups_turn()
 
         ### wake loup blanc ###
         if(bot.NB_NIGHTS % 2 == 0):
@@ -160,18 +161,24 @@ async def game_process(ctx):
 
         ### vote for maire ###
         if(bot.MAYOR == None):
-            await election()
+            # result
+            bot.MAYOR = await election()
+            # warn players of the choice
+            await bot.HISTORY_TEXT_CHANNEL.send(f'\n\nVotre choix est fait, le maire est **{bot.MAYOR}**\n\n')
+            await asyncio.sleep(1)
         else:
-            await bot.HISTORY_TEXT_CHANNEL.send(f'\nMaire: {bot.MAYOR} \n')
+            await bot.HISTORY_TEXT_CHANNEL.send(f'\nMaire: **{bot.MAYOR}** \n')
 
         ### vote for day kill ###
-        await lynch()
+        victim = await lynch()
 
         ### compute dead of the day ###
-        if(bot.VICTIM != None):
-            bot.DEADS_OF_DAY.append(bot.VICTIM)
+        # if(bot.VICTIM != None):
+        if(victim != None):
+            # bot.DEADS_OF_DAY.append(bot.VICTIM)
+            bot.DEADS_OF_DAY.append(victim)
             # bot.VICTIM can be reset to None
-            bot.VICTIM = None
+            #bot.VICTIM = None
 
         if(await check_ange_win(bot.DEADS_OF_DAY)):
             break
@@ -196,6 +203,7 @@ async def game_process(ctx):
         for player in bot.DEADS:
             if(isinstance(player.role, Chasseur)):
                 if(player.role.target_choice == None):
+                    # TODO: display kill
                     await chasseur_turn()
                     bot.DEADS.append(player.role.target_choice)
                     bot.ALIVE_PLAYERS.remove(player.role.target_choice)
@@ -237,7 +245,7 @@ async def stop_game(ctx):
         await ctx.send('aucune partie en cours')
         return
 
-    await ctx.send('arret de la partie en cours')
+    await bot.BEGINNING_CHANNEL.send('arret de la partie en cours')
     await delete_game_category(ctx)
     bot.default_values(bot)
 

@@ -19,8 +19,8 @@ class Target:
 
 class TargetEmoji:
     def __init__(self, player, accusators):
-        self.player = player
-        self.accusators = accusators
+        self.player = player  # a Player obj
+        self.accusators = accusators  # a list of Player objs
 
     def __str__(self):
         message = f"{len(self.accusators)} votes pour **{self.player}** :\t| "

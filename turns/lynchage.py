@@ -1,97 +1,74 @@
 import discord
 from discord.ext import commands
 import asyncio
+import random
 import constant
 from data_struct.bot import Bot
 from data_struct.target import Target
 from turns.mayor import mayor_choice
 
+from vote import vote
+
 bot = Bot()
 
 
 async def lynch():
-    # find the target:
-    # print(bot.LOUP_TARGETS)
-    targets_choice = []
-
     ### warn village ###
-    message = f'\n\n**Les villageois ont {constant.TIME_FOR_VICTIM_ELECTION} secondes pour choisir la victime du jour:**\n\n'
-    bot.TURN = "VICTIME_ELECTION"
+    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Les villageois ont {constant.TIME_FOR_VICTIM_ELECTION} secondes pour choisir la victime du jour:**\n\n')
 
     ### vote ###
-
-    time_left = constant.TIME_FOR_VICTIM_ELECTION
-
-    num = 0
-    for player in bot.ALIVE_PLAYERS:
-        message += f'{num}:  {player}\n'
-        num += 1
-    message += '\ncommande: !vote <int>\n'
-    message += 'exemple: !vote 5\n'
-    await bot.HISTORY_TEXT_CHANNEL.send(message)
-
-    await asyncio.sleep(time_left - 30)
-    time_left = 30
-    await bot.HISTORY_TEXT_CHANNEL.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left - 20)
-    time_left = 20
-    await bot.HISTORY_TEXT_CHANNEL.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left - 10)
-    time_left = 10
-    await bot.HISTORY_TEXT_CHANNEL.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left - 5)
-    time_left = 5
-    await bot.HISTORY_TEXT_CHANNEL.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left)
-
-    # if no target
-    if(len(bot.VICTIM_TARGETS) == 0):
-        # no mayor choice from the players
-        await bot.HISTORY_TEXT_CHANNEL.send("\n**Vous n'avez pas choisi de victime, le maire va choisir**\n")
-    else:
-        targets_choice.clear()
-        max_accusator = max([len(target.accusators)
-                             for target in bot.VICTIM_TARGETS])
-        targets_choice = [target for target in bot.VICTIM_TARGETS if len(
-            target.accusators) == max_accusator]
-
-    bot.VICTIM_TARGETS.clear()
+    targets_choice = await vote(channel=bot.HISTORY_TEXT_CHANNEL, target_players=bot.ALIVE_PLAYERS, voters=bot.ALIVE_PLAYERS, emoji="👎", time=constant.TIME_FOR_VICTIM_ELECTION)
 
     target_choice = None
-    # draw for the votes if equality
-    if(len(targets_choice) > 1):
-        # choose the target where the mayor is in accusators
-        for victim_target in targets_choice:
-            if(bot.MAYOR in victim_target.accusators):
-                target_choice = victim_target.player
-                break
-    elif(len(targets_choice) == 1):
-        target_choice = targets_choice[0].player
+    target_player = None
+    if(len(targets_choice) == 1):
+        target_choice = targets_choice[0]
+        target_player = target_choice.player
+        await bot.HISTORY_TEXT_CHANNEL.send(f'**{target_choice.nb_accusators()}** votes pour **{target_choice.player}**: | *{"* | *".join(map(str,target_choice.accusators))}* |')
+    elif(len(targets_choice) > 1):
+        # check if mayor in accusators:
+        check_mayor_in = False
+        for target in targets_choice:
+            for accusator in target.accusators:
+                if(accusator == bot.MAYOR):
+                    await bot.HISTORY_TEXT_CHANNEL.send("**Le maire a fait pencher la balance**")
+                    target_choice = target
+                    target_player = target.player
+                    await bot.HISTORY_TEXT_CHANNEL.send(f'**{target_choice.nb_accusators()}** votes pour **{target_choice.player}**: | *{"* | *".join(map(str,target_choice.accusators))}* |')
+                    check_mayor_in = True
+                    break
+        if(check_mayor_in == False):
+            # if mayor not in accusators then the mayor choose
+            await bot.HISTORY_TEXT_CHANNEL.send("**Vous ne vous êtes pas décidés**")
+            await asyncio.sleep(1)
+            await bot.HISTORY_TEXT_CHANNEL.send(f"Le maire **{bot.MAYOR}** va choisir")
 
-    elif(len(targets_choice) == 0):  # if no target at all
-        num = 0
-        # add all the alive players as targets for the mayor to choose
-        for player in bot.ALIVE_PLAYERS:
-            targets_choice.append(Target(actual_num=num, player=player))
-            num += 1
+            # choix du maire
+            # if multiple choices then targets = all alive players for the mayor to choose from
+            if(len(targets_choice) == 0):
+                target_players = bot.ALIVE_PLAYERS
+            else:
+                target_players = [target.player for target in targets_choice]
+            targets_choice = await vote(channel=bot.HISTORY_TEXT_CHANNEL, target_players=target_players, voters=[bot.MAYOR], emoji="👎", time=constant.TIME_FOR_MAYOR_FINAL_CHOICE)
+            target_choice = None
+            if(len(targets_choice) == 1):
+                target_choice = targets_choice[0]
+                target_player = target_choice.player
+                await bot.HISTORY_TEXT_CHANNEL.send(f'**{target_choice.nb_accusators()}** votes pour **{target_choice.player}**: | *{"* | *".join(map(str,target_choice.accusators))}* |')
+            elif(len(targets_choice) == 0):  # if no targets then kill no one
+                pass
+                #targets_choice = bot.ALIVE_PLAYERS
+                #target_choice = random.choice(targets_choice)
+                #target_player = target_choice.player
+                # await bot.HISTORY_TEXT_CHANNEL.send(f'**Les dieux RNG ont choisi {target_choice.player}**')
+            else:
+                print(
+                    "error mayor has choosen multiple targets for the final choice, it should not be possible")
+                raise Exception
+                await bot.HISTORY_TEXT_CHANNEL.send(f'**{target_choice.nb_accusators()}** votes pour **{target_choice.player}**: | *{"* | *".join(map(str,target_choice.accusators))}* |')
+    elif(len(targets_choice) == 0):  # if no choice made then nobody dies
+        await bot.HISTORY_TEXT_CHANNEL.send(f"Vous n'avez pas fait de choix, personne ne va mourrir aujourd'hui")
+        await asyncio.sleep(1)
 
-    # else:
-    # print(target_choice)
-    # print(len(target_choice))
-    # print("error in lynch: not len(targets_choice) > 1, not len(targets_choice) == 1")
-    # raise Exception
-
-    # if target_choice is still None then the mayor need to choose the victim
-    if(target_choice == None):
-        bot.MAYOR_ONLY_CHOICES = targets_choice
-        target_choice = await mayor_choice()
-        bot.MAYOR_ONLY_CHOICES.clear()
-
-    bot.TURN = "FIN_VICTIME_ELECTION"
-
-    # results
-    # warn players of the choice
-    await bot.HISTORY_TEXT_CHANNEL.send(f'votre choix est fait, vous avez choisi {target_choice}')
     await asyncio.sleep(1)
-    bot.VICTIM = target_choice
-    bot.VICTIM_TARGETS.clear()
+    return target_player

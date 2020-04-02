@@ -1,3 +1,4 @@
+import os
 import discord
 from discord.ext import commands
 import constant
@@ -7,6 +8,7 @@ bot = Bot()
 
 
 async def create_game_category(ctx):
+
     # get guild (server)
     guild = ctx.guild
 
@@ -34,7 +36,6 @@ async def create_game_category(ctx):
     #    member = player.discordMember
     #    overwrites[member] = discord.PermissionOverwrite(read_messages=True)
 
-    # TODO: create loup garou only channel
     bot.LOUPS_TEXT_CHANNEL = await game_category.create_text_channel(constant.LOUPS_TEXT_CHANNEL_NAME, overwrites=overwrites)
 
     # for each player create a secret text channel
@@ -53,7 +54,7 @@ async def create_game_category(ctx):
             player.private_channel = await game_category.create_text_channel(constant.PRIVATE_TEXT_CHANNEL_NAME, overwrites=overwrites)
         # setattr(player,'PRIVATE_CHANNEL', private_channel)
         print(player)
-        await player.private_channel.send(file=discord.File('images/' + player.role.image_filename))
+        await player.private_channel.send(file=discord.File(os.path.join('images', player.role.image_filename)))
         await player.private_channel.send(player.role.display_role())
 
 

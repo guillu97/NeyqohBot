@@ -18,6 +18,11 @@ class Bot(object):
         return cls._instance
 
     def default_values(_instance):
+        _instance.BEGINNING_CHANNEL = None
+        _instance.GAME_CATEGORY = None
+        _instance.HISTORY_TEXT_CHANNEL = None
+        _instance.GAME_VOICE_CHANNEL = None
+        _instance.LOUPS_TEXT_CHANNEL = None
         _instance.GAME_CREATED = False
         _instance.GAME_STARTED = False
         _instance.PLAYERS = []
@@ -50,4 +55,4 @@ class Bot(object):
         _instance.NB_NIGHTS = 1
         _instance.TURN = ""
         _instance.PAUSE_TASK = None
-        _instance.GAME_LOOP = None
+        #_instance.GAME_LOOP = None

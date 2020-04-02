@@ -4,6 +4,7 @@ import asyncio
 import constant
 from data_struct.roles import Voyante
 from data_struct.bot import Bot
+from vote import vote
 
 bot = Bot()
 
@@ -25,6 +26,11 @@ async def voyantes_turn():
 async def voyante_play(voyante):
     # warn voyante
     message = f'Vous avez {constant.TIME_FOR_VOYANTE} secondes pour choisir le joueur dont le role vous intéresse\n\n'
+
+    all_players_but_voyante = [
+        player for player in bot.ALIVE_PLAYERS if player != voyante]
+    targets_choice = await vote(channel=voyante.private_channel, target_players=all_players_but_voyante, voters=[voyante], emoji="👍", time=constant.TIME_FOR_VOYANTE)
+    """
     time_left = constant.TIME_FOR_VOYANTE
 
     num = 0
@@ -45,15 +51,18 @@ async def voyante_play(voyante):
     await asyncio.sleep(time_left)
 
     bot.TURN = "FIN_VOYANTE"
+    """
 
+    target_choice = None
+    target_player = None
     # warn of the choice
-    if(len(voyante.role.targets) == 0):
+    if(len(targets_choice) == 0):
         await voyante.private_channel.send("\n**vous n'avez choisi personne**\n")
-    elif(len(voyante.role.targets) == 1):
-        target = voyante.role.targets[0]
-        await voyante.private_channel.send(f'\n**votre choix est fait, vous avez choisi {target.player} qui est {target.player.role}**\n')
+    elif(len(targets_choice) == 1):
+        target_choice = targets_choice[0]
+        target_player = target_choice.player
+        await voyante.private_channel.send(f'\n**votre choix est fait, vous avez choisi {target_player} qui est {target_player.role}**\n')
     else:
         print(
             "error in voyante_turn : not len(voyante.targets) == 0  and not len(voyante.targets) == 1")
         raise Exception
-    voyante.role.targets = []
