@@ -107,4 +107,4 @@ async def create_emojis():
                 if(emoji.name == "maire"):
                     exists = True
             if(not exists):
-                await guild.create_custom_emoji(name="maire", image=bytearray(image.read()))
+                Mayor.emoji = await guild.create_custom_emoji(name="maire", image=bytearray(image.read()))

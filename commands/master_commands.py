@@ -138,7 +138,7 @@ async def assign_nb_loup(ctx, number_of_loups: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    if(bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
         await ctx.send('la partie a déjà commencé')
         return
 
@@ -167,7 +167,7 @@ async def assign_nb_loupBlanc(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    if(bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
         await ctx.send('la partie a déjà commencé')
         return
 
@@ -185,7 +185,7 @@ async def assign_nb_ange(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    if(bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
         await ctx.send('la partie a déjà commencé')
         return
 
@@ -203,7 +203,7 @@ async def assign_nb_voyante(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    if(bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
         await ctx.send('la partie a déjà commencé')
         return
 
@@ -221,7 +221,7 @@ async def assign_nb_sorcière(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    if(bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
         await ctx.send('la partie a déjà commencé')
         return
 
@@ -239,7 +239,7 @@ async def assign_nb_chasseur(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    if(bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
         await ctx.send('la partie a déjà commencé')
         return
 
@@ -257,7 +257,7 @@ async def assign_nb_cupidon(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    if(bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
         await ctx.send('la partie a déjà commencé')
         return
 
@@ -275,7 +275,7 @@ async def show_roles(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    if(bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
         await ctx.send('la partie a déjà commencé')
         return
     roles = await calc_roles(verbose=True)
@@ -290,7 +290,7 @@ async def allow_more_roles(ctx, boolean: bool):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    if(bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
         await ctx.send('la partie a déjà commencé')
         return
 
@@ -351,7 +351,7 @@ async def assign_min_players(ctx, min_number_of_players: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée')
         return
-    if(bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
         await ctx.send('la partie a déjà commencé')
         return
 

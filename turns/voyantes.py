@@ -61,7 +61,7 @@ async def voyante_play(voyante):
     elif(len(targets_choice) == 1):
         target_choice = targets_choice[0]
         target_player = target_choice.player
-        await voyante.private_channel.send(f'\n**votre choix est fait, vous avez choisi {target_player} qui est {target_player.role}**\n')
+        await voyante.private_channel.send(f'\nVous avez choisi **{target_player}** qui est **{target_player.role}** {target_player.role.emoji}\n')
     else:
         print(
             "error in voyante_turn : not len(voyante.targets) == 0  and not len(voyante.targets) == 1")

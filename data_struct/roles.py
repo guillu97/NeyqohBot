@@ -7,6 +7,9 @@ class Role:
     def display_role(self):
         return self.roleName + "\n" + self.description
 
+# /!\ this class is only to have the emoji /!\
+class Mayor(Role):
+    pass
 
 class LoupGarou(Role):
     def __init__(self):

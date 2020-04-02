@@ -5,7 +5,7 @@ import random
 import constant
 from data_struct.bot import Bot
 from vote import vote
-
+from data_struct.roles import Mayor
 bot = Bot()
 
 
@@ -20,7 +20,7 @@ async def election():
         ### warn village ###
         await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Les villageois ont {constant.TIME_FOR_MAYOR_ELECTION} secondes pour choisir le maire:**\n\n')
 
-        targets_choice = await vote(channel=bot.HISTORY_TEXT_CHANNEL, target_players=bot.ALIVE_PLAYERS, voters=bot.ALIVE_PLAYERS, emoji="👍", time=constant.TIME_FOR_MAYOR_ELECTION)
+        targets_choice = await vote(channel=bot.HISTORY_TEXT_CHANNEL, target_players=bot.ALIVE_PLAYERS, voters=bot.ALIVE_PLAYERS, emoji=Mayor.emoji, time=constant.TIME_FOR_MAYOR_ELECTION)
 
         counter_max_elections -= 1
 

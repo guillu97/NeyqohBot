@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from data_struct.roles import *
 
 ### CONSTANTS ###
 
@@ -10,6 +11,8 @@ GUILD = os.getenv('DISCORD_GUILD')
 COMMANDS_PREFIX = "!"
 
 MASTER_OF_THE_GAME = 'Maitre du jeu'
+
+IMPLEMENTED_ROLES = [Villageois, Voyante, Sorcière, Chasseur, Ange, Cupidon, LoupGarou, LoupBlanc]
 
 GAME_CATEGORY_NAME = "Neyqoh_Game"
 GAME_VOICE_CHANNEL_NAME = "Place du village"

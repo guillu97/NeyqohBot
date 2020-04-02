@@ -3,6 +3,8 @@ from discord import Emoji
 from data_struct.target import TargetEmoji
 from data_struct.bot import Bot
 from data_struct.player import Player
+from roles_compute import calc_roles
+import constant
 
 bot = Bot()
 
@@ -24,7 +26,7 @@ async def check_players(channel, joining_msg, players_msg, emoji):
                 await message.add_reaction(emoji=emoji)
                 break
 
-    while(bot.GAME_STARTED != True):
+    while(bot.ROLES_CHOOSEN != True):
         print("check running")
         print(bot.GAME_STARTED)
         # check the people that have added an emoji to the message
@@ -51,16 +53,17 @@ async def check_players(channel, joining_msg, players_msg, emoji):
     return bot.PLAYERS
 
 
-# this will fill bot.PLAYERS and await bot.GAME_STARTED == True
-async def joining_process(channel, emoji):
+# this will await bot.ROLES_CHOOSEN == True
+async def choose_roles(channel):
+    await channel.send(f'\n\n**Le maitre du jeu choisit les roles**')
+    roles = await calc_roles(verbose=True)
+    roles_msg = await channel.send(roles)
 
-    join_msg = await channel.send(f'\n\n**Ajoutez un {emoji} pour rejoindre la partie**')
-    players_msg = await channel.send(f'joueurs: {" | ".join(map(str,bot.PLAYERS))}\n')
-    await join_msg.add_reaction(emoji=emoji)
-    await join_msg.add_reaction(emoji="✔️")
+    for role in constant.IMPLEMENTED_ROLES:
+        await roles_msg.add_reaction(emoji=role.emoji)
 
-    if(bot.GAME_STARTED == False):
-        await check_players(channel=channel, joining_msg=join_msg, players_msg=players_msg, emoji=emoji)
+    if(bot.ROLES_CHOOSEN == False):
+        await check_players(channel=channel, joining_msg=roles_msg, players_msg=players_msg, emoji=emoji)
     else:
-        print("in join: bot.GAME_STARTED was already True so why are you waiting for it : maybe change this")
+        print("in vote: bot.ROLES_CHOOSEN was already True so why are you waiting for it : maybe change this")
         raise Exception
