@@ -57,7 +57,7 @@ async def join_game(ctx):
 # @commands.has_role(MASTER_OF_THE_GAME)
 async def vote(ctx, choice: int):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
     if(bot.GAME_STARTED == False):
         await ctx.send("la partie n'a pas commencé")
@@ -172,7 +172,7 @@ async def vote(ctx, choice: int):
 # @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def show_players(ctx):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
     await ctx.send("\n".join(map(str, bot.PLAYERS)))
 
@@ -183,7 +183,7 @@ async def show_players(ctx):
 # @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def show_players_alive(ctx):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
     if(bot.GAME_STARTED == False):
         await ctx.send("la partie n'a pas commencée")

@@ -13,7 +13,7 @@ from data_struct.bot import Bot
 from data_struct.roles import *
 from data_struct.target import TargetEmoji
 from vote import vote
-from join import joining_process
+from join import joining_process, check_start
 
 bot = Bot()
 
@@ -34,6 +34,9 @@ async def new_game(ctx):
     bot.GAME_CREATED = True
 
     await ctx.send('Nouvelle partie créée!\n\n')
+
+    # choose roles
+    # await choose_roles()
 
     # joining loop witing for the MASTER_OF_THE_GAME to  input !start ###
     # this will fill bot.PLAYERS
@@ -84,62 +87,17 @@ async def delete_channels(ctx):
 @bot.command(name='start', help='commence la partie avec toutes les personnes ayant effectuées !join')
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def start_game(ctx):
-    if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
-        return
-
-    if(len(bot.PLAYERS) < bot.MINIMUM_PLAYER_NB):
-        await ctx.send(f"le nombre minimum de joueurs ({bot.MINIMUM_PLAYER_NB}) n'est pas atteint")
-        return
-
-    if(not bot.ALLOW_MORE_ROLES):
-        roles = await calc_roles(verbose=False)
-        if(roles == None):
-            await ctx.send('\n**Le nombre de roles est supérieur au nombre de joueurs**\n')
-            return
-
-    bot.GAME_STARTED = True
-    """
-    await ctx.send('la partie commence!')
-
-    bot.GAME_STARTED = True
-
-    await assign_roles()
-
-    await create_game_category(ctx)
-    guild = ctx.guild
-    game_voice_channel = bot.GAME_VOICE_CHANNEL
-
-    # move the player to the game voice channel
-    for player in bot.PLAYERS:
-        member = player.discordMember
-        print(member.display_name)
-        try:
-            await member.move_to(game_voice_channel)
-        except Exception as e:
-            print(e)
-
-    # get the game loop
-    bot.GAME_LOOP = asyncio.get_running_loop()
-
-    await game_process(ctx)
-
-    # beginningChannel = None
-    # search for the beginning voice channel
-    # discord.utils.get(guild.categories, name=constant.GAME_CATEGORY_NAME)
-    # print(beginningChannel.members)
-
-    """
+    await check_start(ctx.channel)
 
 
 @bot.command(name='loup', help='configure le nombre de loups pour la partie')
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_loup(ctx, number_of_loups: int):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
-        await ctx.send('la partie a déjà commencé')
+    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of_loups > 0):
@@ -165,10 +123,10 @@ async def assign_nb_loup(ctx, number_of_loups: int):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_loupBlanc(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
-        await ctx.send('la partie a déjà commencé')
+    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of == 0 or number_of == 1):
@@ -183,10 +141,10 @@ async def assign_nb_loupBlanc(ctx, number_of: int):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_ange(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
-        await ctx.send('la partie a déjà commencé')
+    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of >= 0 and number_of <= constant.MAX_NB_ANGE):
@@ -201,10 +159,10 @@ async def assign_nb_ange(ctx, number_of: int):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_voyante(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
-        await ctx.send('la partie a déjà commencé')
+    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of >= 0 and number_of <= len(bot.PLAYERS)):
@@ -219,10 +177,10 @@ async def assign_nb_voyante(ctx, number_of: int):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_sorcière(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
-        await ctx.send('la partie a déjà commencé')
+    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of >= 0 and number_of <= len(bot.PLAYERS)):
@@ -237,10 +195,10 @@ async def assign_nb_sorcière(ctx, number_of: int):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_chasseur(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
-        await ctx.send('la partie a déjà commencé')
+    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of == 0 or number_of == 1):
@@ -255,10 +213,10 @@ async def assign_nb_chasseur(ctx, number_of: int):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_nb_cupidon(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
-        await ctx.send('la partie a déjà commencé')
+    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of == 0 or number_of == 1):
@@ -273,10 +231,10 @@ async def assign_nb_cupidon(ctx, number_of: int):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def show_roles(ctx):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
-        await ctx.send('la partie a déjà commencé')
+    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé', delete_after=2)
         return
     roles = await calc_roles(verbose=True)
     print(roles)
@@ -288,10 +246,10 @@ async def show_roles(ctx):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def allow_more_roles(ctx, boolean: bool):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
-        await ctx.send('la partie a déjà commencé')
+    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     bot.ALLOW_MORE_ROLES = boolean
@@ -305,7 +263,7 @@ async def allow_more_roles(ctx, boolean: bool):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def timed_pause_game(ctx, pause_time: int = 30):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
     if(bot.GAME_STARTED == False):
         await ctx.send("la partie n'a pas encore commencé")
@@ -329,7 +287,7 @@ async def timed_pause_game(ctx, pause_time: int = 30):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def pause_game(ctx):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
     if(bot.GAME_STARTED == False):
         await ctx.send("la partie n'a pas encore commencé")
@@ -349,10 +307,10 @@ async def pause_game(ctx):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def assign_min_players(ctx, min_number_of_players: int):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.GAME_STARTED == True and bot.ROLES_CHOOSEN == True):
-        await ctx.send('la partie a déjà commencé')
+    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+        await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     bot.MINIMUM_PLAYER_NB = min_number_of_players
@@ -363,7 +321,7 @@ async def assign_min_players(ctx, min_number_of_players: int):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def test(ctx):
     if(bot.GAME_CREATED == False):
-        await ctx.send('aucune partie créée')
+        await ctx.send('aucune partie créée', delete_after=2)
         return
     """if(bot.GAME_STARTED == True):
         await ctx.send("la partie a déjà commencé")

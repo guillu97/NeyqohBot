@@ -1,5 +1,6 @@
 import os
 import discord
+from discord import VoiceChannel
 from discord.ext import commands
 import constant
 from data_struct.bot import Bot
@@ -70,5 +71,13 @@ async def delete_game_category(ctx):
     print(category_exists)
     if category_exists:
         for channel in category_exists.channels:
+            if(isinstance(channel, VoiceChannel) and len(channel.members) != 0):
+                temp_voice_channel_exists = discord.utils.get(
+                    guild.channels, name=constant.TEMP_VOICE_CHANNEL_NAME)
+                if(not temp_voice_channel_exists):
+                    temp_voice_channel_exists = await guild.create_voice_channel(
+                        name=constant.TEMP_VOICE_CHANNEL_NAME)
+                for member in channel.members:
+                    await member.move_to(temp_voice_channel_exists)
             await channel.delete()
         await category_exists.delete()

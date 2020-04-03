@@ -94,6 +94,7 @@ async def vote(channel, target_players, voters, emoji, time=0):
     # start timer message
     await timer(channel, time)
 
+    # TODO: search with Emoji.roles if there is another way to restrict emojis
     # not accepting the other emojis from all the members of the server
     # list of the players from which we remove the rights
     tempChannelMembers = channel.members[:]

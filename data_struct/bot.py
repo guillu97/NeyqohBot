@@ -24,8 +24,8 @@ class Bot(object):
         _instance.GAME_VOICE_CHANNEL = None
         _instance.LOUPS_TEXT_CHANNEL = None
         _instance.GAME_CREATED = False
-        _instance.GAME_STARTED = False
         _instance.ROLES_CHOOSEN = False
+        _instance.GAME_STARTED = False
         _instance.PLAYERS = []
         _instance.DEADS_OF_NIGHT = []
         _instance.DEADS_OF_DAY = []
