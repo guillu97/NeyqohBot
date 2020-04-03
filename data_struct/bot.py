@@ -24,7 +24,6 @@ class Bot(object):
         _instance.GAME_VOICE_CHANNEL = None
         _instance.LOUPS_TEXT_CHANNEL = None
         _instance.GAME_CREATED = False
-        _instance.ROLES_CHOOSEN = False
         _instance.GAME_STARTED = False
         _instance.PLAYERS = []
         _instance.DEADS_OF_NIGHT = []
@@ -45,13 +44,6 @@ class Bot(object):
         _instance.MAYOR = None
         _instance.VICTIM = None
         _instance.MINIMUM_PLAYER_NB = constant.MINIMUM_PLAYER_NB
-        _instance.NB_LOUP = constant.DEFAULT_NB_LOUP
-        _instance.NB_LOUP_BLANC = constant.DEFAULT_NB_LOUP_BLANC
-        _instance.NB_CUPIDON = constant.DEFAULT_NB_CUPIDON
-        _instance.NB_VOYANTE = constant.DEFAULT_NB_VOYANTE
-        _instance.NB_SORCIERE = constant.DEFAULT_NB_SORCIERE
-        _instance.NB_CHASSEUR = constant.DEFAULT_NB_CHASSEUR
-        _instance.NB_ANGE = 0
         _instance.ALLOW_MORE_ROLES = False
         _instance.NB_NIGHTS = 1
         _instance.TURN = ""

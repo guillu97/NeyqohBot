@@ -14,7 +14,7 @@ async def check_multiple_votes(channel, context_messages, emoji, voters):
         playerReacts[player.discordMember] = None
 
     ids = [message.id for message in context_messages]
-    async for message in channel.history(limit=100):
+    async for message in channel.history(limit=30):
         if message.id in ids:
             if(len(message.reactions) != 1):
                 await message.clear_reactions()
@@ -26,7 +26,7 @@ async def check_multiple_votes(channel, context_messages, emoji, voters):
         # if before it was 0  => don't remove the reaction
         # if it was not 0 => remove the old reaction and let the new reaction
 
-        async for message in channel.history(limit=100):
+        async for message in channel.history(limit=30):
             if(message.id in ids):
                 for reaction in message.reactions:
                     # if not the good emoji => then delete
@@ -110,7 +110,7 @@ async def vote(channel, target_players, voters, emoji, time=0):
     # emojisCount = {}
     targets_choice = []
     possible_accusators = voters[:]
-    async for message in channel.history(limit=100):
+    async for message in channel.history(limit=30):
         if message.id in ids:
             # with the mention get back the player
             current_player = None

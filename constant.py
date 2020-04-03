@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-from data_struct.roles import *
 
 ### CONSTANTS ###
 
@@ -12,8 +11,6 @@ COMMANDS_PREFIX = "!"
 
 MASTER_OF_THE_GAME = 'Maitre du jeu'
 
-IMPLEMENTED_ROLES = [Villageois, Voyante, Sorcière,
-                     Chasseur, Ange, Cupidon, LoupGarou, LoupBlanc]
 
 GAME_CATEGORY_NAME = "Neyqoh_Game"
 GAME_VOICE_CHANNEL_NAME = "Place du village"
@@ -62,5 +59,6 @@ DEFAULT_NB_SORCIERE = 0
 
 DEFAULT_NB_CHASSEUR = 0
 
-MAX_NB_ANGE = 1
+DEFAULT_NB_ANGE = 0
+
 ###

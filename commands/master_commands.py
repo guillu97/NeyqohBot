@@ -14,6 +14,7 @@ from data_struct.roles import *
 from data_struct.target import TargetEmoji
 from vote import vote
 from join import joining_process, check_start
+from choose_roles import choose_roles
 
 bot = Bot()
 
@@ -35,12 +36,14 @@ async def new_game(ctx):
 
     await ctx.send('Nouvelle partie créée!\n\n')
 
-    # choose roles
-    # await choose_roles()
-
+    # choose roles and
     # joining loop witing for the MASTER_OF_THE_GAME to  input !start ###
     # this will fill bot.PLAYERS
-    await joining_process(channel=ctx.channel, emoji="👍")
+    await asyncio.gather(
+        choose_roles(channel=ctx.channel),
+        joining_process(channel=ctx.channel, emoji_join="👍", emoji_start="⚔️"),
+    )
+
     await ctx.send('la partie commence!')
 
     await assign_roles()
@@ -96,7 +99,7 @@ async def assign_nb_loup(ctx, number_of_loups: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True):
         await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
@@ -104,7 +107,7 @@ async def assign_nb_loup(ctx, number_of_loups: int):
         print(number_of_loups)
         if(not bot.ALLOW_MORE_ROLES):
             if(number_of_loups < len(bot.PLAYERS)):
-                bot.NB_LOUP = number_of_loups
+                LoupGarou.nb = number_of_loups
                 roles = await calc_roles(verbose=True)
                 print(roles)
                 message = f'\n{roles}\n'
@@ -112,7 +115,7 @@ async def assign_nb_loup(ctx, number_of_loups: int):
             else:
                 await ctx.send('nombre de loup > ou = au nombre de joueurs')
         else:
-            bot.NB_LOUP = number_of_loups
+            LoupGarou.nb = number_of_loups
             roles = await calc_roles(verbose=True)
             print(roles)
             message = f'\n{roles}\n'
@@ -125,12 +128,12 @@ async def assign_nb_loupBlanc(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True):
         await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of == 0 or number_of == 1):
-        bot.NB_LOUP_BLANC = number_of
+        LoupBlanc.nb = number_of
         roles = await calc_roles(verbose=True)
         print(roles)
         message = f'\n{roles}\n'
@@ -143,12 +146,12 @@ async def assign_nb_ange(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True):
         await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
-    if(number_of >= 0 and number_of <= constant.MAX_NB_ANGE):
-        bot.NB_ANGE = number_of
+    if(number_of == 0 or number_of == 1):
+        Ange.nb = number_of
         roles = await calc_roles(verbose=True)
         print(roles)
         message = f'\n{roles}\n'
@@ -161,12 +164,12 @@ async def assign_nb_voyante(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True):
         await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of >= 0 and number_of <= len(bot.PLAYERS)):
-        bot.NB_VOYANTE = number_of
+        Voyante.nb = number_of
         roles = await calc_roles(verbose=True)
         print(roles)
         message = f'\n{roles}\n'
@@ -179,12 +182,12 @@ async def assign_nb_sorcière(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True):
         await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of >= 0 and number_of <= len(bot.PLAYERS)):
-        bot.NB_SORCIERE = number_of
+        Sorcière.nb = number_of
         roles = await calc_roles(verbose=True)
         print(roles)
         message = f'\n{roles}\n'
@@ -197,12 +200,12 @@ async def assign_nb_chasseur(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True):
         await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of == 0 or number_of == 1):
-        bot.NB_CHASSEUR = number_of
+        Chasseur.nb = number_of
         roles = await calc_roles(verbose=True)
         print(roles)
         message = f'\n{roles}\n'
@@ -215,12 +218,12 @@ async def assign_nb_cupidon(ctx, number_of: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True):
         await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
     if(number_of == 0 or number_of == 1):
-        bot.NB_CUPIDON = number_of
+        Cupidon.nb = number_of
         roles = await calc_roles(verbose=True)
         print(roles)
         message = f'\n{roles}\n'
@@ -233,7 +236,7 @@ async def show_roles(ctx):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True):
         await ctx.send('la partie a déjà commencé', delete_after=2)
         return
     roles = await calc_roles(verbose=True)
@@ -248,7 +251,7 @@ async def allow_more_roles(ctx, boolean: bool):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True):
         await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 
@@ -309,7 +312,7 @@ async def assign_min_players(ctx, min_number_of_players: int):
     if(bot.GAME_CREATED == False):
         await ctx.send('aucune partie créée', delete_after=2)
         return
-    if(bot.ROLES_CHOOSEN == True and bot.GAME_STARTED == True):
+    if(bot.GAME_STARTED == True):
         await ctx.send('la partie a déjà commencé', delete_after=2)
         return
 

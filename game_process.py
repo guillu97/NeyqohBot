@@ -35,7 +35,7 @@ async def game_process(ctx):
 
         # cupidon's turn
         if(bot.NB_NIGHTS == 1):
-            if(bot.NB_CUPIDON == 1):
+            if(Cupidon.nb > 0):
                 await cupidon_turn()
 
         # voyante's turn
@@ -50,7 +50,7 @@ async def game_process(ctx):
 
         ### wake loup blanc ###
         if(bot.NB_NIGHTS % 2 == 0):
-            if(bot.NB_LOUP_BLANC == 1):
+            if(LoupBlanc.nb == 1):
                 if(await still_something(LoupBlanc)):
                     await loup_blanc_turn()
                     # add the kill if there is one

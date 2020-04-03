@@ -39,7 +39,7 @@ async def check_players(channel, joining_msg, players_msg, emoji_join, emoji_sta
     old_players_discord = []
     # clear reactions to be sure that there aren't any first
     msg_id = joining_msg.id
-    async for message in channel.history(limit=100):
+    async for message in channel.history(limit=30):
         if message.id == msg_id:
             if(len(message.reactions) != 1):
                 await message.clear_reactions()
@@ -51,7 +51,7 @@ async def check_players(channel, joining_msg, players_msg, emoji_join, emoji_sta
         #print("check running")
         # print(bot.GAME_STARTED)
         # check the people that have added an emoji to the message
-        async for message in channel.history(limit=100):
+        async for message in channel.history(limit=30):
             if(message.id == msg_id):
                 for reaction in message.reactions:
                     if(reaction.emoji == emoji_start):
@@ -78,26 +78,27 @@ async def check_players(channel, joining_msg, players_msg, emoji_join, emoji_sta
                             # from discord Members to Players obj
                             bot.PLAYERS = [Player(user)
                                            for user in players_discord]
-                            await players_msg.edit(content=str(f'joueurs: {" ".join(map(str,bot.PLAYERS))}\n'))
+                            await players_msg.edit(content=str(f'joueurs:\n {" ".join(map(str,bot.PLAYERS))} \n\n'))
                             old_players_discord = players_discord
                 break
         # need to sleep at least a bit because otherwise we cannot cancel the task
         # await asyncio.sleep(1)
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(1)
 
     return bot.PLAYERS
 
 
 # this will fill bot.PLAYERS and await bot.GAME_STARTED == True
-async def joining_process(channel, emoji):
+async def joining_process(channel, emoji_join, emoji_start):
+    
 
-    join_msg = await channel.send(f'\n\n**Ajoutez un {emoji} pour rejoindre la partie**')
+    join_msg = await channel.send(f'**Ajoutez un {emoji_join} pour rejoindre la partie et appuyer sur {emoji_start} pour commencer la partie**')
     players_msg = await channel.send(f'joueurs: {" | ".join(map(str,bot.PLAYERS))}\n')
     # await join_msg.add_reaction(emoji=emoji)
     # await join_msg.add_reaction(emoji="⚔️")
 
     if(bot.GAME_STARTED == False):
-        await check_players(channel=channel, joining_msg=join_msg, players_msg=players_msg, emoji_join=emoji, emoji_start="⚔️")
+        await check_players(channel=channel, joining_msg=join_msg, players_msg=players_msg, emoji_join=emoji_join, emoji_start=emoji_start)
     else:
         print("in join: bot.GAME_STARTED was already True so why are you waiting for it : maybe change this")
         raise Exception
