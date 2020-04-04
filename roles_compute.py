@@ -10,55 +10,61 @@ bot = Bot()
 
 
 async def calc_roles(verbose):
-    if(len(bot.PLAYERS) < constant.MINIMUM_PLAYER_NB):
-        nb_players = constant.MINIMUM_PLAYER_NB  
-    else:
-        nb_players = len(bot.PLAYERS)
 
+    nb_players = len(bot.PLAYERS)
+
+    """
     if(LoupGarou.nb < nb_players or bot.ALLOW_MORE_ROLES == True):
         nb_loup = LoupGarou.nb
     else:
         nb_loup = int(nb_players/4)
         if nb_loup == 0:
             nb_loup = 1
-    
-    LoupGarou.nb = nb_loup
 
+    LoupGarou.nb = nb_loup
+    """
+
+    """
     nb_villageois = nb_players
     for role in roles.IMPLEMENTED_ROLES:
         nb_villageois -= role.__class__.nb
 
-    Villageois.nb = nb_villageois
+
+    SimpleVillageois.nb = nb_villageois
+    
 
     if(nb_villageois < 0):
         print('nb_villageois < 0')
         # raise ValueError
+    """
 
     roles_list = []
 
     for role in roles.IMPLEMENTED_ROLES:
         roles_list.extend([role.__class__() for _ in range(role.__class__.nb)])
 
-
-    message = ""
-    if(not bot.ALLOW_MORE_ROLES):
-        if(len(roles_list) > nb_players):
-            print('nb_roles > nb_players')
-            if(verbose):
-                message += '\n**nombre de roles supérieur au nombre de joueurs dans la partie**\n\n'
-            else:
-                return None
-
+    message = "\n"
     if(verbose):
-        message += f"**nombre de joueurs :** {nb_players}\n"
-
         for role in roles.IMPLEMENTED_ROLES:
-            if(role.__class__.nb > 0):
-                message += f"**{role}**: {role.__class__.nb}  |  "
-            else:
+            if(role.__class__.nb < 0):
                 role.__class__.nb = 0
+            message += f"**| {role.__class__.emoji} {role}: {role.__class__.nb}** "
+        message += "**|**\n"
+
+        if(len(roles_list) < nb_players):
+            print('nb_roles < nb_players')
+            message += '\n**nombre de roles est inférieur au nombre de joueurs dans la partie**'
+        elif(not bot.ALLOW_MORE_ROLES and len(roles_list) > nb_players):
+            print('nb_roles > nb_players')
+            message += '\n**nombre de roles est supérieur au nombre de joueurs dans la partie**'
         return message
     else:
+        if(len(roles_list) < nb_players):
+            print('nb_roles < nb_players')
+            return False
+        if(not bot.ALLOW_MORE_ROLES and len(roles_list) > nb_players):
+            print('nb_roles > nb_players')
+            return None
         return roles_list
 
 

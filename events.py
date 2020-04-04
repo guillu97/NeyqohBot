@@ -20,8 +20,9 @@ async def on_command_error(ctx, error):
     print(error)
     # raise
 
-
+"""
 @bot.event
 async def on_reaction_add(reaction, user):
     print("an emoji has been sent:")
     print(reaction.emoji)
+"""

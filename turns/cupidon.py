@@ -12,7 +12,7 @@ async def cupidon_turn():
     await bot.HISTORY_TEXT_CHANNEL.send(f'Cupidon a {constant.TIME_FOR_CUPIDON} secondes pour choisir les amoureux\n\n')
     bot.TURN = "CUPIDON"
 
-    # search chasseur
+    # search Cupidon
     cupidon = None
     for player in bot.ALIVE_PLAYERS:
         if(isinstance(player.role, Cupidon)):

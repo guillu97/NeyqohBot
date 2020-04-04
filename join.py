@@ -19,8 +19,12 @@ async def check_start(channel):
         await channel.send(f"le nombre minimum de joueurs ({bot.MINIMUM_PLAYER_NB}) n'est pas atteint", delete_after=2)
         return False
 
+    roles = await calc_roles(verbose=False)
+    if(roles == False):
+        await channel.send('\n**Le nombre de roles est inférieur au nombre de joueurs**\n', delete_after=2)
+        return False
+
     if(not bot.ALLOW_MORE_ROLES):
-        roles = await calc_roles(verbose=False)
         if(roles == None):
             await channel.send('\n**Le nombre de roles est supérieur au nombre de joueurs**\n', delete_after=2)
             return False
@@ -47,6 +51,7 @@ async def check_players(channel, joining_msg, players_msg, emoji_join, emoji_sta
                 await message.add_reaction(emoji=emoji_start)
                 break
 
+    time_between_loops = 1
     while(bot.GAME_STARTED != True):
         #print("check running")
         # print(bot.GAME_STARTED)
@@ -78,19 +83,18 @@ async def check_players(channel, joining_msg, players_msg, emoji_join, emoji_sta
                             # from discord Members to Players obj
                             bot.PLAYERS = [Player(user)
                                            for user in players_discord]
-                            await players_msg.edit(content=str(f'joueurs:\n {" ".join(map(str,bot.PLAYERS))} \n\n'))
+                            await players_msg.edit(content=str(f'joueurs:\n {" ".join(map(str,bot.PLAYERS))} \n**nombre de joueurs :** {len(bot.PLAYERS)}\n'))
                             old_players_discord = players_discord
                 break
         # need to sleep at least a bit because otherwise we cannot cancel the task
         # await asyncio.sleep(1)
-        await asyncio.sleep(1)
+        await asyncio.sleep(time_between_loops)
 
     return bot.PLAYERS
 
 
 # this will fill bot.PLAYERS and await bot.GAME_STARTED == True
 async def joining_process(channel, emoji_join, emoji_start):
-    
 
     join_msg = await channel.send(f'**Ajoutez un {emoji_join} pour rejoindre la partie et appuyer sur {emoji_start} pour commencer la partie**')
     players_msg = await channel.send(f'joueurs: {" | ".join(map(str,bot.PLAYERS))}\n')
