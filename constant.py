@@ -47,7 +47,7 @@ NB_MAX_MAYOR_ELECTIONS = 3
 
 MINIMUM_PLAYER_NB = 2  # TODO: in prod : 4 players min
 
-DEFAULT_NB_LOUP = 1000  # if nb > nb_players => nb = nb_players/4
+DEFAULT_NB_LOUP = 1  # if nb < nb_players => nb  else => nb = nb_players/4
 
 DEFAULT_NB_LOUP_BLANC = 0
 

@@ -3,6 +3,7 @@ from discord.ext import commands
 import random
 import constant
 from data_struct.roles import *
+from data_struct import roles
 from data_struct.bot import Bot
 
 bot = Bot()
@@ -20,84 +21,45 @@ async def calc_roles(verbose):
         nb_loup = int(nb_players/4)
         if nb_loup == 0:
             nb_loup = 1
-
-    roles = []
-
-    for _ in range(nb_loup):
-        roles.append(LoupGarou())
-
-    # TODO: here add the number of the special roles
-    nb_voyante = Voyante.nb
-    for _ in range(nb_voyante):
-        roles.append(Voyante())
-
-    nb_ange = Ange.nb
-    for _ in range(nb_ange):
-        roles.append(Ange())
-
-    nb_sorcière = Sorcière.nb
-    for _ in range(nb_sorcière):
-        roles.append(Sorcière())
-
-    nb_chasseur = Chasseur.nb
-    for _ in range(nb_chasseur):
-        roles.append(Chasseur())
-
-    nb_cupidon = Cupidon.nb
-    for _ in range(nb_cupidon):
-        roles.append(Cupidon())
-
-    nb_loupBlanc = LoupBlanc.nb
-    for _ in range(nb_loupBlanc):
-        roles.append(LoupBlanc())
-
-    # TODO: Here add the substraction of the nb of special role
-    nb_villageois = nb_players - nb_loup - nb_voyante - \
-        nb_ange - nb_sorcière - nb_chasseur - nb_cupidon - nb_loupBlanc
     
+    LoupGarou.nb = nb_loup
+
+    nb_villageois = nb_players
+    for role in roles.IMPLEMENTED_ROLES:
+        nb_villageois -= role.__class__.nb
+
+    Villageois.nb = nb_villageois
 
     if(nb_villageois < 0):
         print('nb_villageois < 0')
         # raise ValueError
 
-    for _ in range(nb_villageois):
-        roles.append(Villageois())
+    roles_list = []
+
+    for role in roles.IMPLEMENTED_ROLES:
+        roles_list.extend([role.__class__() for _ in range(role.__class__.nb)])
+
 
     message = ""
     if(not bot.ALLOW_MORE_ROLES):
-        if(len(roles) > nb_players):
+        if(len(roles_list) > nb_players):
             print('nb_roles > nb_players')
             if(verbose):
                 message += '\n**nombre de roles supérieur au nombre de joueurs dans la partie**\n\n'
             else:
                 return None
 
-    Villageois.nb = nb_villageois
-
     if(verbose):
         message += f"**nombre de joueurs :** {nb_players}\n"
 
-        if(nb_villageois != 0):
-            message += f"**villageois:** {nb_villageois}\n"
-        if(nb_loup != 0):
-            message += f"**loups :** {nb_loup}\n"
-        # TODO: add here for the special roles
-        if(nb_loupBlanc != 0):
-            message += f"**loup blanc:** {nb_loupBlanc}\n"
-        if(nb_cupidon != 0):
-            message += f'**cupidon:** {nb_cupidon}\n'
-        if(nb_voyante != 0):
-            message += f"**voyante:** {nb_voyante}\n"
-        if(nb_sorcière != 0):
-            message += f'**sorcière:** {nb_sorcière}\n'
-        if(nb_ange != 0):
-            message += f"**ange:** {nb_ange}\n"
-        if(nb_chasseur != 0):
-            message += f'**chasseur:** {nb_chasseur}\n'
-
+        for role in roles.IMPLEMENTED_ROLES:
+            if(role.__class__.nb > 0):
+                message += f"**{role}**: {role.__class__.nb}  |  "
+            else:
+                role.__class__.nb = 0
         return message
     else:
-        return roles
+        return roles_list
 
 
 async def assign_roles():

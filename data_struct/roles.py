@@ -12,7 +12,8 @@ class Role:
 
 # /!\ this class is only to have the emoji /!\
 class Mayor(Role):
-    pass
+    def __init__(self):
+        self.image_filename = "maire.png"
 
 class LoupGarou(Role):
     nb = constant.DEFAULT_NB_LOUP
@@ -52,7 +53,7 @@ class Sorcière(Villageois):
     def __init__(self):
         self.roleName = "Sorcière"
         self.description = "Son objectif est d'éliminer tous les Loups-Garous. Elle dispose de deux potions : une potion de vie pour sauver la victime des Loups, et une potion de mort pour assassiner quelqu'un."
-        self.image_filename = "sorcière.png"
+        self.image_filename = "sorciere.png"
         self.lifePotion = True
         self.deathPotion = True
         self.target_choice = None

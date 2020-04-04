@@ -23,10 +23,10 @@ async def check_roles(channel, roles_msg, add_msg, remove_msg, possible_roles):
     while(bot.GAME_STARTED != True):
         #print("check roles running")
         #print(bot.GAME_STARTED)
-        nb_to_change = 0 # add +1 or -1
         two_messages_found = 0
         # check the people that have added an emoji to the message
         async for message in channel.history(limit=30):
+            nb_to_change = 0 # add +1 or -1
             if(message.id == add_msg.id):
                 nb_to_change = 1
                 two_messages_found += 1
@@ -43,6 +43,7 @@ async def check_roles(channel, roles_msg, add_msg, remove_msg, possible_roles):
                     users = reaction.users()
                     users = await users.flatten()
                     #if(len(users) == 2): # bot + master_of_game reactions
+                    master = None
                     for user in users:
                         if(user.bot == True):
                             break
@@ -51,20 +52,25 @@ async def check_roles(channel, roles_msg, add_msg, remove_msg, possible_roles):
                                 "user == bot or user not game")
                             await reaction.remove(user)
                             break
+                        master = user
+                    if(master != None):
                         for role in possible_roles:
                             if(role.emoji == reaction.emoji):
                                 role.__class__.nb += nb_to_change
                                 content = await calc_roles(verbose=True)
+                                await reaction.remove(master)
                                 if(content != old_content):
                                     await roles_msg.edit(content=content)
                                     old_content = content
                                 break
                             
-            if(two_messages_found == 2): # ne need to search through the other messages
+            if(two_messages_found == 2): # no need to search through the other messages
                 break
+        for role in possible_roles:
+            print(str(role) + str(role.__class__.nb))
         # need to sleep at least a bit because otherwise we cannot cancel the task
         # await asyncio.sleep(1)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
 
     return bot.PLAYERS
 
@@ -85,8 +91,8 @@ async def choose_roles(channel):
 
     possible_roles = ""
     for role in roles.IMPLEMENTED_ROLES:
-        possible_roles += f"{role.emoji} " + str(role) + "\n"
-    await channel.send("**roles possibles: **\n" + possible_roles)
+        possible_roles += f"{role.emoji} " + str(role) + "  |  "
+    await channel.send("\n" + possible_roles)
 
 
     
