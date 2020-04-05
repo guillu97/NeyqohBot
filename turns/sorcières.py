@@ -26,34 +26,24 @@ async def sorcières_turn():
 
 
 async def sorcière_play(sorcière):
-    """for player in bot.ALIVE_PLAYERS:
-        if(isinstance(player.role, Sorcière)):
-            sorcière = player
-    """
-
-    """if(sorcière == None):
-        print('sorcière play but no sorcière alive')
-        raise Exception"""
 
     # show the victim of the loups if still life potion
     if(sorcière.role.lifePotion):
         if(bot.LOUP_FINAL_TARGET):
 
-            message = '\nVoulez vous sauver cette personne?\n'
-
-            await sorcière.private_channel.send(message)
+            await sorcière.private_channel.send('Voulez vous sauver cette personne?')
 
             targets_choice = await vote(channel=sorcière.private_channel, target_players=[bot.LOUP_FINAL_TARGET], voters=[sorcière], emoji="👍", time=int(constant.TIME_FOR_SORCIERE/2))
 
             # warn of the choice
             if(len(targets_choice) == 0):
-                await sorcière.private_channel.send("\n**vous n'avez pas choisi de sauver cette personne**\n")
+                await sorcière.private_channel.send("**vous n'avez pas choisi de sauver cette personne**")
             elif(len(targets_choice) == 1):
-                await sorcière.private_channel.send(f'\n**votre choix est fait, vous avez choisi de sauver cette personne: {bot.LOUP_FINAL_TARGET}**\n')
+                await sorcière.private_channel.send(f'**votre choix est fait, vous avez choisi de sauver cette personne: {bot.LOUP_FINAL_TARGET}**')
                 bot.LOUP_FINAL_TARGET = None
                 sorcière.role.lifePotion = False
         else:
-            await sorcière.private_channel.send("\n\n**Personne n'est mort ce soir**\n\n")
+            await sorcière.private_channel.send("**Personne n'est mort ce soir**")
             time_left = int(constant.TIME_FOR_SORCIERE/2)
             await sorcière.private_channel.send(f"attendez {time_left} secondes pour votre prochaine action")
             await asyncio.sleep(time_left)
@@ -67,9 +57,9 @@ async def sorcière_play(sorcière):
     target_player = None
     if(sorcière.role.deathPotion):
 
-        message = f"\n\n**Voulez vous utiliser votre potion de mort sur quelqu'un?**\n\n"
+        message = f"**Voulez vous utiliser votre potion de mort sur quelqu'un?**\n"
 
-        message += f'\n\n**Vous avez {int(constant.TIME_FOR_SORCIERE/2)} secondes pour effectuer cette action**\n\n'
+        message += f'**Vous avez {int(constant.TIME_FOR_SORCIERE/2)} secondes pour effectuer cette action**'
 
         await sorcière.private_channel.send(message)
 
@@ -77,11 +67,11 @@ async def sorcière_play(sorcière):
 
         # warn of the choice
         if(len(targets_choice) == 0):
-            await sorcière.private_channel.send("\n**vous n'avez pas pas utiliser votre potion de mort**\n")
+            await sorcière.private_channel.send("**vous n'avez pas pas utiliser votre potion de mort**")
         elif(len(targets_choice) == 1):
             target_choice = targets_choice[0]
             target_player = target_choice.player
-            await sorcière.private_channel.send(f'\n**votre choix est fait, vous avez choisi de tuer cette personne: {target_player}**\n')
+            await sorcière.private_channel.send(f'**votre choix est fait, vous avez choisi de tuer cette personne: {target_player}**')
             # sorcière.role.target_choice = None
     else:
         time_left = int(constant.TIME_FOR_SORCIERE/2)

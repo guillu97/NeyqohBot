@@ -13,6 +13,7 @@ from turns.chasseur import chasseur_turn
 from turns.election import election
 from turns.lynchage import lynch
 from turns.mayor import mayor_give_up
+from turns.salvateur import salvateur_turn
 
 from channels_process import delete_game_category
 
@@ -39,11 +40,17 @@ async def game_process(ctx):
         # only for the first night
         if(bot.NB_NIGHTS == 1):
             if(Cupidon.nb > 0):
-                bot.AMOUREUX = await cupidon_turn()
+                bot.AMOUREUX = (await cupidon_turn())[:]
 
         # voyante's turn
         if(await still_something(Voyante)):
             await voyantes_turn()
+
+        salvateur_target_player = None
+        # salvateur's turn
+        if(Salvateur.nb > 0):
+            if(await still_something(Salvateur)):
+                salvateur_target_player = await salvateur_turn()
 
         # TODO : do a gather to make the above roles play at the same time
 
@@ -52,7 +59,13 @@ async def game_process(ctx):
         ### wake loups ###
         # for the moment but TODO: replace this by a local variable that you send to the loupBlanc and then the sorcière
         if(await still_something(LoupGarou)):
-            bot.LOUP_FINAL_TARGET = await loups_turn()
+            target = await loups_turn()
+            # if the target is not the salvateur's one then we add the target to kill it
+            if(target != salvateur_target_player):
+                bot.LOUP_FINAL_TARGET = target
+            # else the loups' target is None beacause the salvateur saved the target
+            else:
+                bot.LOUP_FINAL_TARGET = None
 
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
@@ -70,7 +83,7 @@ async def game_process(ctx):
         ### wake sorcière ###
         sorcières_targets = []
         if(await still_something(Sorcière)):
-            sorcières_targets = await sorcières_turn()
+            sorcières_targets = (await sorcières_turn())[:]
 
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
@@ -94,11 +107,12 @@ async def game_process(ctx):
             message += "\n\n**personne n'est mort ce soir**\n\n"
         else:
             for player in bot.DEADS_OF_NIGHT:
-                message += f"\n**{player}** est mort ce soir, son role : **{player.role}**\n"
-                # now put it in the table for all the deads
-                bot.DEADS.append(player)
-                # remove the dead from the alive player table
-                bot.ALIVE_PLAYERS.remove(player)
+                if(player not in bot.DEADS):
+                    message += f"\n**{player}** est mort ce soir, son role : {player.role.emoji} **{player.role}**\n"
+                    # now put it in the table for all the deads
+                    bot.DEADS.append(player)
+                    # remove the dead from the alive player table
+                    bot.ALIVE_PLAYERS.remove(player)
         bot.DEADS_OF_NIGHT.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
@@ -168,7 +182,7 @@ async def game_process(ctx):
             await bot.HISTORY_TEXT_CHANNEL.send(f'\n\nVotre choix est fait, le maire est **{bot.MAYOR}**\n\n')
             await asyncio.sleep(1)
         else:
-            await bot.HISTORY_TEXT_CHANNEL.send(f'\nMaire: **{bot.MAYOR}** \n')
+            await bot.HISTORY_TEXT_CHANNEL.send(f'\n\nMaire: **{bot.MAYOR}** \n')
 
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
@@ -194,11 +208,12 @@ async def game_process(ctx):
             message += "\n\n**personne n'est mort**\n"
         else:
             for player in bot.DEADS_OF_DAY:
-                message += f"\n**{player}** est mort aujourd'hui, son role : **{player.role}**\n"
-                # now put it in the table for all the deads
-                bot.DEADS.append(player)
-                # remove the dead from the alive player table
-                bot.ALIVE_PLAYERS.remove(player)
+                if(player not in bot.DEADS):
+                    message += f"\n**{player}** est mort aujourd'hui, son role : {player.role.emoji} **{player.role}**\n"
+                    # now put it in the table for all the deads
+                    bot.DEADS.append(player)
+                    # remove the dead from the alive player table
+                    bot.ALIVE_PLAYERS.remove(player)
         bot.DEADS_OF_DAY.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
@@ -261,12 +276,13 @@ async def check_amoureux():
     for player in bot.DEADS:
         if(player in bot.AMOUREUX):
             bot.AMOUREUX.remove(player)
-            message += f"\n**{player}** était amoureux avec : **{bot.AMOUREUX[0]}**\n"
-            message += f"\n**{bot.AMOUREUX[0]}** est donc également mort, son role : **{bot.AMOUREUX[0].role}**\n"
+            message = f"\n**{player}** était amoureux avec : **{bot.AMOUREUX[0]}**"
+            message += f"\n**{bot.AMOUREUX[0]}** est donc également mort, son role : {bot.AMOUREUX[0].role.emoji} **{bot.AMOUREUX[0].role}**\n"
+            await bot.HISTORY_TEXT_CHANNEL.send(message)
             bot.DEADS.append(bot.AMOUREUX[0])
             bot.ALIVE_PLAYERS.remove(bot.AMOUREUX[0])
             bot.AMOUREUX.clear()
-        break
+            break
 
 
 async def check_chasseur():

@@ -29,8 +29,10 @@ async def loups_turn():
 
     # warn loups garou
     message = f'Vous avez {constant.TIME_FOR_LOUPS} secondes pour choisir votre victime de la nuit\n'
-    message += f'Les loups vivants sont : ' + \
-        ' ** '.join(map(str, bot.LOUPS)) + '**\n'
+    message += f'Les loups vivants sont : **' + \
+        '** **'.join(map(str, bot.LOUPS)) + '**\n'
+
+    await bot.LOUPS_TEXT_CHANNEL.send(message)
     #time_left = constant.TIME_FOR_LOUPS
 
     # equivalent

@@ -53,10 +53,10 @@ async def calc_roles(verbose):
 
         if(len(roles_list) < nb_players):
             print('nb_roles < nb_players')
-            message += '\n**nombre de roles est inférieur au nombre de joueurs dans la partie**'
+            message += '\n**Le nombre de roles est inférieur au nombre de joueurs dans la partie**'
         elif(not bot.ALLOW_MORE_ROLES and len(roles_list) > nb_players):
             print('nb_roles > nb_players')
-            message += '\n**nombre de roles est supérieur au nombre de joueurs dans la partie**'
+            message += '\n**Le nombre de roles est supérieur au nombre de joueurs dans la partie**'
         return message
     else:
         if(len(roles_list) < nb_players):

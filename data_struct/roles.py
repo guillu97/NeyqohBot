@@ -100,12 +100,6 @@ class Cupidon(Villageois):
         self.image_filename = "cupidon.png"
 
 
-IMPLEMENTED_ROLES = [SimpleVillageois(), Voyante(), Sorcière(),
-                     Chasseur(), Ange(), Cupidon(), LoupGarou(), LoupBlanc()]
-
-# TODO:
-
-
 class Salvateur(Villageois):
     nb = 0
 
@@ -114,3 +108,8 @@ class Salvateur(Villageois):
         self.description = "Son objectif est d'éliminer tous les Loups-Garous. Chaque nuit, il peut protéger quelqu'un de l'attaque des Loups-Garous...\n "
         self.image_filename = "salvateur.png"
         self.target_choice = None
+
+
+# TODO: add implemented roles when their turn is coded
+IMPLEMENTED_ROLES = [SimpleVillageois(), Voyante(), Salvateur(), Sorcière(),
+                     Chasseur(), Ange(), Cupidon(), LoupGarou(), LoupBlanc()]
