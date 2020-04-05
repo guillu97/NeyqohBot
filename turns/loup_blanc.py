@@ -3,6 +3,8 @@ from discord.ext import commands
 import asyncio
 import constant
 from data_struct.bot import Bot
+from data_struct.roles import LoupBlanc
+from vote import vote
 
 bot = Bot()
 
@@ -13,7 +15,7 @@ async def loup_blanc_turn():
 
     # search loup blanc
     loupBlanc = None
-    for player in bot.ALIVE_PLAYERS:
+    for player in bot.LOUPS:
         if(isinstance(player.role, LoupBlanc)):
             loupBlanc = player
             break
@@ -22,38 +24,21 @@ async def loup_blanc_turn():
         print("error in loup_blanc_turn: loupBlanc = None")
         raise ValueError
 
-    await loupBlanc.private_channel.send(f'\n\n**Vous avez {constant.TIME_FOR_LOUP_BLANC} secondes pour choisir une victime parmi les loups ou non**\n\n')
-    message = ""
-    num = 0
-    targets = [player for player in bot.LOUPS if(
-        not isinstance(player.role, LoupBlanc))]
-    print(targets)
-    for player in targets:
-        print(player)
-    if(len(targets) > 0):
-        bot.TURN = "LOUP_BLANC"
-        for player in targets:
-            message += f'{num}:  {player}\n'
-            num += 1
-        message += '\ncommande: !vote <int>\n'
-        message += 'exemple: !vote 5\n'
-        message += '\n\n**si vous ne votez pas, vous ne tuerez aucun loup cette nuit**\n\n'
+    await loupBlanc.private_channel.send(f'\n\n**Vous avez {constant.TIME_FOR_LOUP_BLANC} secondes pour choisir une victime parmi les loups ou aucune victime**\n\n')
+
+    target_choice = None
+    target_player = None
+    if(len(bot.LOUPS) == 1):
+        await loupBlanc.private_channel.send("Tous les autres loups sont déjà morts")
     else:
-        message += "\n\n**Tous les loups sont dejà morts, attendez la fin de votre tour**\n\n"
-        bot.TURN = "FIN_LOUP_BLANC"
-    await loupBlanc.private_channel.send(message)
+        targets_choice = await vote(channel=loupBlanc.private_channel, target_players=bot.LOUPS, voters=[loupBlanc], emoji="👎", time=constant.TIME_FOR_LOUP_BLANC)
 
-    time_left = int(constant.TIME_FOR_LOUP_BLANC)
-    await asyncio.sleep(time_left - 5)
-    time_left = 5
-    await loupBlanc.private_channel.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left)
+        # warn of the choice
+        if(len(targets_choice) == 0):
+            await loupBlanc.private_channel.send(f"\n**Vous n'avez pas tuer de loup cette nuit**\n")
+        elif(len(targets_choice) == 1):
+            target_choice = targets_choice[0]
+            target_player = target_choice.player
+            await loupBlanc.private_channel.send(f'\n**votre choix est fait, vous avez choisi de tuer cette personne: {target_player}**\n')
 
-    bot.TURN = "FIN_LOUP_BLANC"
-
-    # warn of the choice
-    if(loupBlanc.role.target_choice != None):
-        await loupBlanc.private_channel.send(f'\n**votre choix est fait, vous avez choisi de tuer cette personne: {loupBlanc.role.target_choice}**\n')
-    else:
-        if(len(targets) > 0):
-            await loupBlanc.private_channel.send(f"\n**votre choix est fait, vous n'avez pas tuer de loup cette nuit**\n")
+    return target_player

@@ -132,6 +132,8 @@ async def vote(channel, target_players, voters, emoji, time=0):
                         break
 
                 unique_accusators = (list(set(accusators)))
+                # print("unique_accusators")
+                # print(unique_accusators)
 
                 # from the discord members to the real players Obj
                 accusators_player = []
@@ -140,7 +142,9 @@ async def vote(channel, target_players, voters, emoji, time=0):
                         if(player.discordMember == accusator):
                             if(player not in accusators_player):
                                 accusators_player.append(player)
-                                possible_accusators.remove(player)
+                                # possible_accusators.remove(player)
+                # print("accusators_player")
+                # print(accusators_player)
 
                 if(len(accusators_player) != 0):
                     targets_choice.append(TargetEmoji(

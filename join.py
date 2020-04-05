@@ -101,8 +101,8 @@ async def joining_process(channel, emoji_join, emoji_start):
     # await join_msg.add_reaction(emoji=emoji)
     # await join_msg.add_reaction(emoji="⚔️")
 
-    if(bot.GAME_STARTED == False):
-        await check_players(channel=channel, joining_msg=join_msg, players_msg=players_msg, emoji_join=emoji_join, emoji_start=emoji_start)
-    else:
-        print("in join: bot.GAME_STARTED was already True so why are you waiting for it : maybe change this")
-        raise Exception
+    # if(bot.GAME_STARTED == False):
+    await check_players(channel=channel, joining_msg=join_msg, players_msg=players_msg, emoji_join=emoji_join, emoji_start=emoji_start)
+    # else:
+    #    print("in join: bot.GAME_STARTED was already True so why are you waiting for it : maybe change this")
+    #    #raise Exception

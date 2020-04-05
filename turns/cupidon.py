@@ -4,14 +4,14 @@ import asyncio
 import random
 import constant
 from data_struct.bot import Bot
-
+from data_struct.roles import Cupidon
+from vote import vote
 bot = Bot()
+
+# return [Players] len()==2
 
 
 async def cupidon_turn():
-    await bot.HISTORY_TEXT_CHANNEL.send(f'Cupidon a {constant.TIME_FOR_CUPIDON} secondes pour choisir les amoureux\n\n')
-    bot.TURN = "CUPIDON"
-
     # search Cupidon
     cupidon = None
     for player in bot.ALIVE_PLAYERS:
@@ -23,54 +23,39 @@ async def cupidon_turn():
         print("error in cupidon turn: cupidon = None")
         raise ValueError
 
-    await cupidon.private_channel.send(f'Vous avez {constant.TIME_FOR_CUPIDON} secondes pour choisir les amoureux\n\n')
+    amoureux = []
 
-    message = ""
-    num = 0
-    for player in bot.ALIVE_PLAYERS:
-        message += f'{num}:  {player}\n'
-        num += 1
-    message += '\ncommande: !vote <int>\n'
-    message += 'exemple: !vote 5\n'
-    await cupidon.private_channel.send(message)
+    await bot.HISTORY_TEXT_CHANNEL.send(f"Cupidon a {constant.TIME_FOR_CUPIDON} secondes pour choisir les amoureux (et plus s'il n'arrive pas à choisir)\n\n")
+    #bot.TURN = "CUPIDON"
 
-    time_left = int(constant.TIME_FOR_CUPIDON)
-    await asyncio.sleep(time_left - 5)
-    time_left = 5
-    await cupidon.private_channel.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left)
+    await cupidon.private_channel.send(f'**Vous avez {constant.TIME_FOR_CUPIDON} secondes pour choisir les amoureux**\n**Vous allez choisir les amoureux un par un**\n')
 
-    bot.TURN = "FIN_CUPIDON"
+    ### vote ###
+    targets_choice = []
+    tempTable = []
+    while(len(tempTable) != 1):
+        await cupidon.private_channel.send(f'**Amoureux 1:**')
+        tempTable = await vote(channel=cupidon.private_channel, target_players=bot.ALIVE_PLAYERS, voters=[cupidon], emoji="💘", time=int(constant.TIME_FOR_CUPIDON/2))
 
-    if(len(cupidon.role.targets_choice) == 0):
-        rand_index = random.randint(0, len(bot.ALIVE_PLAYERS) - 1)
-        cupidon.role.targets_choice.append(
-            bot.ALIVE_PLAYERS[rand_index])
+    targets_choice.append(tempTable[0].player)
+    tempTable.clear()
+    await cupidon.private_channel.send(f'\nVous avez choisi **{targets_choice[0]}**\n')
 
-        rand_index2 = rand_index
-        while(rand_index2 == rand_index):
-            rand_index2 = random.randint(0, len(bot.ALIVE_PLAYERS) - 1)
+    all_players_without_first_lover = [
+        player for player in bot.ALIVE_PLAYERS if player not in targets_choice]
+    while(len(tempTable) != 1):
+        await cupidon.private_channel.send(f'Amoureux 2:')
+        tempTable = await vote(channel=cupidon.private_channel, target_players=all_players_without_first_lover, voters=[cupidon], emoji="💘", time=int(constant.TIME_FOR_CUPIDON/2))
 
-        cupidon.role.targets_choice.append(
-            bot.ALIVE_PLAYERS[rand_index2])
-
-    if(len(cupidon.role.targets_choice) == 1):
-        target = cupidon.role.targets_choice[0]
-        while(target in cupidon.role.targets_choice):
-            rand_index = random.randint(0, len(bot.ALIVE_PLAYERS) - 1)
-            target = bot.ALIVE_PLAYERS[rand_index]
-        cupidon.role.targets_choice.append(bot.ALIVE_PLAYERS[rand_index])
-
-    bot.AMOUREUX = cupidon.role.targets_choice
+    targets_choice.append(tempTable[0].player)
+    await cupidon.private_channel.send(f'\nVous avez choisi **{targets_choice[1]}**\n')
 
     # warn of the choice
-    message = f'\n**Votre choix est fait, les amoureux sont: {bot.AMOUREUX[0]} et {bot.AMOUREUX[1]}**\n'
-    await cupidon.private_channel.send(message)
+    await cupidon.private_channel.send(f'\n**Votre choix est fait, les amoureux sont: {targets_choice[0]} et {targets_choice[1]}**\n')
 
     # send message to the amoureux
-    message = f'\n**Vous êtes amoureux avec : {bot.AMOUREUX[1]}**\n'
-    await bot.AMOUREUX[0].private_channel.send(message)
-    message = f'\n**Vous êtes amoureux avec : {bot.AMOUREUX[0]}**\n'
-    await bot.AMOUREUX[1].private_channel.send(message)
+    await targets_choice[0].private_channel.send(f'\n**Vous êtes amoureux avec : {targets_choice[1]}**\n')
+    await targets_choice[1].private_channel.send(f'\n**Vous êtes amoureux avec : {targets_choice[0]}**\n')
 
     await asyncio.sleep(4)
+    return targets_choice

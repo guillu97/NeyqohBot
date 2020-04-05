@@ -4,59 +4,40 @@ import asyncio
 import random
 import constant
 from data_struct.bot import Bot
+from data_struct.roles import Mayor
+from vote import vote
 
 bot = Bot()
 
 
-async def mayor_give_up():
+async def mayor_give_up(mayor):
 
-    message = f'\n\n**Le maire a {constant.TIME_FOR_MAYOR_GIVE_UP} secondes pour désigner le nouveau maire:**\n\n'
-    bot.MAYOR_CHOICES.clear()
-    bot.TURN = "MAYOR_GIVE_UP"
+    await bot.HISTORY_TEXT_CHANNEL.send(f'\n\n**Le maire **{mayor}** a {constant.TIME_FOR_MAYOR_GIVE_UP} secondes pour désigner le nouveau maire:**\n\n')
 
-    time_left = constant.TIME_FOR_MAYOR_GIVE_UP
-
-    num = 0
-    for player in bot.ALIVE_PLAYERS:
-        message += f'{num}:  {player}\n'
-        num += 1
-    message += '\ncommande: !vote <int>\n'
-    message += 'exemple: !vote 5\n'
-    await bot.HISTORY_TEXT_CHANNEL.send(message)
-
-    await asyncio.sleep(time_left - 30)
-    time_left = 30
-    await bot.HISTORY_TEXT_CHANNEL.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left - 20)
-    time_left = 20
-    await bot.HISTORY_TEXT_CHANNEL.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left - 10)
-    time_left = 10
-    await bot.HISTORY_TEXT_CHANNEL.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left - 5)
-    time_left = 5
-    await bot.HISTORY_TEXT_CHANNEL.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left)
+    targets_choice = await vote(channel=bot.HISTORY_TEXT_CHANNEL, target_players=bot.ALIVE_PLAYERS, voters=[mayor], emoji=Mayor.emoji, time=constant.TIME_FOR_MAYOR_GIVE_UP)
 
     target_choice = None
+    target_player = None
     # if no target
-    if(len(bot.MAYOR_CHOICES) == 0):
+    if(len(targets_choice) == 0):
         # choose the target randomly
-        rand_index = random.randint(0, len(bot.ALIVE_PLAYERS) - 1)
-        target_choice = bot.ALIVE_PLAYERS[rand_index]
-    elif(len(bot.MAYOR_CHOICES) == 1):
-        target_choice = bot.MAYOR_CHOICES[0].player
+        target_choice = random.choice(bot.ALIVE_PLAYERS)
+        target_player = target_choice.player
+    elif(len(targets_choice) == 1):
+        target_choice = targets_choice[0]
+        target_player = target_choice.player
     else:
         print(
             "error in election: not len(targets_choice) > 1, not len(targets_choice) == 1")
         raise Exception
-    bot.TURN = "FIN_MAYOR_GIVE_UP"
+    #bot.TURN = "FIN_MAYOR_GIVE_UP"
     # results
     # warn players of the choice
-    await bot.HISTORY_TEXT_CHANNEL.send(f'votre choix est fait, vous avez choisi {target_choice}')
+    await bot.HISTORY_TEXT_CHANNEL.send(f'votre choix est fait, vous avez choisi **{target_player}** comme nouveau Maire')
     await asyncio.sleep(1)
-    bot.MAYOR = target_choice
-    bot.MAYOR_CHOICES.clear()
+    #bot.MAYOR = target_choice
+    # bot.MAYOR_CHOICES.clear()
+    return target_player
 
 
 async def mayor_choice():

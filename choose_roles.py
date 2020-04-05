@@ -98,8 +98,8 @@ async def choose_roles(channel):
 
     await asyncio.gather(*tasks)
 
-    if(bot.GAME_STARTED == False):
-        await check_roles(channel=channel, roles_msg=roles_msg, add_msg=add_msg, remove_msg=remove_msg, possible_roles=roles.IMPLEMENTED_ROLES)
-    else:
-        print("in vote: bot.GAME_STARTED was already True so why are you waiting for it : maybe change this")
-        raise Exception
+    # if(bot.GAME_STARTED == False):
+    await check_roles(channel=channel, roles_msg=roles_msg, add_msg=add_msg, remove_msg=remove_msg, possible_roles=roles.IMPLEMENTED_ROLES)
+    # else:
+    #    print("in vote: bot.GAME_STARTED was already True so why are you waiting for it : maybe change this")
+    #    #raise Exception

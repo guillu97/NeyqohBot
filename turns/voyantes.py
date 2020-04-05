@@ -25,33 +25,11 @@ async def voyantes_turn():
 
 async def voyante_play(voyante):
     # warn voyante
-    message = f'Vous avez {constant.TIME_FOR_VOYANTE} secondes pour choisir le joueur dont le role vous intéresse\n\n'
+    await voyante.private_channel.send(f'Vous avez {constant.TIME_FOR_VOYANTE} secondes pour choisir le joueur dont le role vous intéresse\n\n')
 
     all_players_but_voyante = [
         player for player in bot.ALIVE_PLAYERS if player != voyante]
     targets_choice = await vote(channel=voyante.private_channel, target_players=all_players_but_voyante, voters=[voyante], emoji="👍", time=constant.TIME_FOR_VOYANTE)
-    """
-    time_left = constant.TIME_FOR_VOYANTE
-
-    num = 0
-    for player in bot.ALIVE_PLAYERS:
-        message += f'{num}:  {player}\n'
-        num += 1
-    message += '\ncommande: !vote <int>\n'
-    message += 'exemple: !vote 5\n'
-
-    await voyante.private_channel.send(message)
-
-    await asyncio.sleep(time_left - 10)
-    time_left = 10
-    await voyante.private_channel.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left - 5)
-    time_left = 5
-    await voyante.private_channel.send(f'{time_left} secondes restantes')
-    await asyncio.sleep(time_left)
-
-    bot.TURN = "FIN_VOYANTE"
-    """
 
     target_choice = None
     target_player = None

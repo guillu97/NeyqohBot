@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import Emoji
 from discord import *
 import random
+import time
 import asyncio
 import constant
 from channels_process import create_game_category, delete_game_category
@@ -15,6 +16,7 @@ from data_struct.target import TargetEmoji
 from vote import vote
 from join import joining_process, check_start
 from choose_roles import choose_roles
+
 
 bot = Bot()
 
@@ -91,6 +93,27 @@ async def delete_channels(ctx):
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def start_game(ctx):
     await check_start(ctx.channel)
+
+
+@bot.command(name='clear', help='efface les 10 derniers messages du bot, !clear')
+@commands.has_role(constant.MASTER_OF_THE_GAME)
+async def clear_msg(ctx):
+    nb = 10
+    await ctx.channel.send(f"efface les {nb} derniers messages du bot")
+    async for message in ctx.channel.history(limit=nb):
+        if(message.author.bot == True):
+            await message.delete()
+
+
+@bot.command(name='clear-nb', help='efface les <NB> derniers messages du bot, !clear <NB>, max 500')
+@commands.has_role(constant.MASTER_OF_THE_GAME)
+async def clear_nb_msg(ctx, nb_msg: int):
+    if(nb_msg > 0):
+        nb = nb_msg
+        await ctx.channel.send(f"efface les {nb} derniers messages du bot")
+        async for message in ctx.channel.history(limit=nb):
+            if(message.author.bot == True):
+                await message.delete()
 
 
 @bot.command(name='loup', help='configure le nombre de loups pour la partie')
