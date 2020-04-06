@@ -14,6 +14,7 @@ from turns.election import election
 from turns.lynchage import lynch
 from turns.mayor import mayor_give_up
 from turns.salvateur import salvateur_turn
+from turns.enfant_sauvage import enfant_sauvage_turn
 
 from channels_process import delete_game_category
 
@@ -41,6 +42,12 @@ async def game_process(ctx):
         if(bot.NB_NIGHTS == 1):
             if(Cupidon.nb > 0):
                 bot.AMOUREUX = (await cupidon_turn())[:]
+
+        # if enfant sauvage
+        # if first night
+        if(bot.NB_NIGHTS == 1):
+            if(EnfantSauvage.nb > 0):
+                await enfant_sauvage_turn()
 
         # voyante's turn
         if(await still_something(Voyante)):
@@ -138,6 +145,8 @@ async def game_process(ctx):
 
         await check_amoureux()
 
+        await check_enfant_sauvage()
+
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
         ### check someone wins or draw ###
@@ -163,6 +172,8 @@ async def game_process(ctx):
         for player in bot.ALIVE_PLAYERS:
             message += f"**{player}**\n"
 
+        """
+        # maybe not because of some roles => chien-loup => incectés pour infect père des loups
         ### display roles in games ###
         message += "\n**roles restants:**\n"
         roles = [player.role for player in bot.ALIVE_PLAYERS]
@@ -170,6 +181,8 @@ async def game_process(ctx):
         for role in roles:
             message += f'{role.emoji} **{role}** \n'
         message += '\n'
+        """
+
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
@@ -230,6 +243,8 @@ async def game_process(ctx):
 
         ### check amoureux ###
         await check_amoureux()
+
+        await check_enfant_sauvage()
 
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
@@ -293,6 +308,21 @@ async def check_chasseur():
                 bot.DEADS.append(target)
                 bot.ALIVE_PLAYERS.remove(target)
                 break
+
+
+async def check_enfant_sauvage():
+    enfantSauvage = None
+    for player in bot.ALIVE_PLAYERS:
+        if(isinstance(player.role, EnfantSauvage)):
+            enfantSauvage = player
+            break
+    if(enfantSauvage != None):
+        for player in bot.DEADS:
+            if(player == enfantSauvage.role.target_choice):
+                enfantSauvage.role = LoupGarou()
+                bot.LOUPS.append(enfantSauvage)
+                # send him a message
+                await enfantSauvage.private_channel.send("**Votre maitre est mort, vous vous transformez en Loup-Garou**")
 
 
 async def still_something(check_class):

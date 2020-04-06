@@ -92,6 +92,5 @@ async def assign_roles():
             player.role = role
             if(isinstance(role, LoupGarou)):
                 bot.LOUPS.append(player)
-                at_least_one_loup = True
             # all players are now alive
             bot.ALIVE_PLAYERS.append(player)

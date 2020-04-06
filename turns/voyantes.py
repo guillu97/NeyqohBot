@@ -29,7 +29,7 @@ async def voyante_play(voyante):
 
     all_players_but_voyante = [
         player for player in bot.ALIVE_PLAYERS if player != voyante]
-    targets_choice = await vote(channel=voyante.private_channel, target_players=all_players_but_voyante, voters=[voyante], emoji="👍", time=constant.TIME_FOR_VOYANTE)
+    targets_choice = await vote(channel=voyante.private_channel, target_players=all_players_but_voyante, voters=[voyante], emoji="👁️", time=constant.TIME_FOR_VOYANTE)
 
     target_choice = None
     target_player = None
