@@ -27,7 +27,12 @@ async def sorcières_turn():
 
 async def sorcière_play(sorcière):
 
-    # show the victim of the loups if still life potion
+    # show the victim of the loups
+    if(bot.LOUP_FINAL_TARGET == None):
+        await sorcière.private_channel.send(f"Personne n'est mort ce soir")
+    else:
+        await sorcière.private_channel.send(f"Cette personne est morte ce soir: {bot.LOUP_FINAL_TARGET}")
+
     if(sorcière.role.lifePotion):
         if(bot.LOUP_FINAL_TARGET):
 
