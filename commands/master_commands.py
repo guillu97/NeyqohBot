@@ -17,6 +17,8 @@ from vote import vote
 from join import joining_process, check_start
 from choose_roles import choose_roles
 
+#from test_music import *
+
 
 bot = Bot()
 
@@ -81,7 +83,7 @@ async def command_stop_game(ctx):
     await stop_game(ctx)
 
 
-@bot.command(name='delete', help="supprime les categrory du jeu si aucune partie n'est en cours")
+@bot.command(name='delete', help="supprime les categories du jeu si aucune partie n'est en cours")
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def delete_channels(ctx):
     if(bot.GAME_CREATED == True):
@@ -369,6 +371,33 @@ async def test(ctx):
         await ctx.send(f'**{target_choice.nb_accusators()}** votes pour **{target_choice.player}**: | *{"* | *".join(map(str,target_choice.accusators))}* |')
     else:
         await ctx.send(f"vous n'avez pas fait de choix")
+
+"""
+@bot.command(name='t', help="test du système de musiques")
+@commands.has_role(constant.MASTER_OF_THE_GAME)
+async def test(ctx):
+    voiceChannel = None
+    for channel in ctx.guild.channels:
+        if(isinstance(channel, VoiceChannel)):
+            voiceChannel = channel
+            break
+    if(voiceChannel != None):
+        voiceClient = await voiceChannel.connect()
+        try:
+            source = await YTDLSource.create_source(ctx, "baiana")
+        except YTDLError as e:
+            await ctx.send('An error occurred while processing this request: {}'.format(str(e)))
+        else:
+            voiceClient.play(source)
+            
+            song = Song(source)
+
+            await ctx.voice_state.songs.put(song)
+            await ctx.send('Enqueued {}'.format(str(source)))
+            
+        #music = Music(bot)
+        # await Music._play(self=music, ctx=ctx, search="baiana")
+"""
 
 
 @bot.command(name='reset-perm', help="met les permissions d'envoi de messages et de reaction de tous les membres à True")

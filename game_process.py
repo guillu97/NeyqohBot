@@ -336,7 +336,7 @@ async def still_something(check_class):
 
 
 async def check_ange_win(table_deads_of_day):
-    if(len(table_deads_of_day) == 1 and isinstance(table_deads_of_day[0].role, Ange)):
+    if(bot.NB_NIGHTS == 1 and len(table_deads_of_day) == 1 and isinstance(table_deads_of_day[0].role, Ange)):
         bot.WINNER = "Ange"
         return True
     return False
