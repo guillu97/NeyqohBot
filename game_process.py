@@ -137,6 +137,8 @@ async def game_process(ctx):
 
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
+        await check_enfant_sauvage()
+
         ### check someone wins or draw ###
         # check if only one player left
         print("check_win")
@@ -248,6 +250,8 @@ async def game_process(ctx):
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
         await check_amoureux()
+
+        await check_enfant_sauvage()
 
         # check deads permissions #
         await check_deads_permissions()
@@ -381,24 +385,25 @@ async def check_win():
     still_loups = await still_something(LoupGarou)
     still_loups_blanc = await still_something(LoupBlanc)
     still_villageois = await still_something(Villageois)
-    still_people = await still_something(Role)
+    # still_people = await still_something(Role)
 
+    wins = False
     if(len(bot.ALIVE_PLAYERS) == 1):
         bot.WINNER = bot.ALIVE_PLAYERS[0].role
-        return True
+        wins = True
     elif(len(bot.ALIVE_PLAYERS) == 2 and bot.ALIVE_PLAYERS[0] in bot.AMOUREUX and bot.ALIVE_PLAYERS[0] in bot.AMOUREUX):
         bot.WINNER = "Amoureux"
-        return True
+        wins = True
     elif(not still_loups):
         # TODO: change this in funct of roles
         bot.WINNER = "Villageois"
-        return True
+        wins = True
     elif(not still_villageois and not still_loups_blanc):
         # TODO: if lovers only left then lovers win
         bot.WINNER = "Loups Garous"
-        return True
-    elif(not still_people):
-        bot.WINNER = "Dieus"
-        return True
+        wins = True
+    if(len(bot.ALIVE_PLAYERS) == 0):
+        bot.WINNER = "Dieux"
+        wins = True
 
-    return False
+    return wins
