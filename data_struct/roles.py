@@ -134,6 +134,7 @@ class EnfantSauvage(Villageois):
 class EnfantSauvageTransforme(LoupGarou):
     nb = 0
     nb_max = 1
+    emoji = EnfantSauvage.emoji
 
     def __init__(self):
         self.roleName = "**Enfant Sauvage**"
