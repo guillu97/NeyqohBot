@@ -22,6 +22,7 @@ class Bot(object):
         _instance.BEGINNING_CHANNEL = None
         _instance.GAME_CATEGORY = None
         _instance.HISTORY_TEXT_CHANNEL = None
+        _instance.DEADS_TEXT_CHANNEL = None
         _instance.GAME_VOICE_CHANNEL = None
         _instance.LOUPS_TEXT_CHANNEL = None
         _instance.GAME_CREATED = False

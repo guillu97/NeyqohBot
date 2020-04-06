@@ -26,6 +26,16 @@ async def create_game_category(ctx):
     # create the history text channel
     bot.HISTORY_TEXT_CHANNEL = await game_category.create_text_channel(name=constant.HISTORY_TEXT_CHANNEL_NAME)
 
+    overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+    }
+    for player in bot.PLAYERS:
+        member = player.discordMember
+        overwrites[member] = discord.PermissionOverwrite(
+            read_messages=False)
+    # create the deads text channel
+    bot.DEADS_TEXT_CHANNEL = await game_category.create_text_channel(name=constant.DEADS_TEXT_CHANNEL, overwrites=overwrites)
+
     # create the game voice channel
     bot.GAME_VOICE_CHANNEL = await game_category.create_voice_channel(name=constant.GAME_VOICE_CHANNEL_NAME)
 

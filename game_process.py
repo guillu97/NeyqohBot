@@ -123,11 +123,17 @@ async def game_process(ctx):
         bot.DEADS_OF_NIGHT.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
+        # check deads permissions #
+        await check_deads_permissions()
+
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
         # TODO: remove the permissions to write in history text channel of the deads : do this in a function that you are gonna paste multiple times
 
         await check_amoureux()
+
+        # check deads permissions #
+        await check_deads_permissions()
 
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
@@ -141,9 +147,15 @@ async def game_process(ctx):
         # chasseur if killed then kill someone:
         await check_chasseur()
 
+        # check deads permissions #
+        await check_deads_permissions()
+
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
         await check_amoureux()
+
+        # check deads permissions #
+        await check_deads_permissions()
 
         await check_enfant_sauvage()
 
@@ -230,19 +242,31 @@ async def game_process(ctx):
         bot.DEADS_OF_DAY.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
+        # check deads permissions #
+        await check_deads_permissions()
+
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
         await check_amoureux()
+
+        # check deads permissions #
+        await check_deads_permissions()
 
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
         # chasseur if killed then kill someone:
         await check_chasseur()
 
+        # check deads permissions #
+        await check_deads_permissions()
+
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
         ### check amoureux ###
         await check_amoureux()
+
+        # check deads permissions #
+        await check_deads_permissions()
 
         await check_enfant_sauvage()
 
@@ -286,6 +310,16 @@ async def stop_game(ctx):
     bot.default_values(bot)
 
 
+async def check_deads_permissions():
+    for player in bot.DEADS:
+        member = player.discordMember
+        await bot.HISTORY_TEXT_CHANNEL.set_permissions(member, send_messages=False, add_reactions=False)
+        await bot.DEADS_TEXT_CHANNEL.set_permissions(
+            member, send_messages=True, read_messages=True)
+        await player.private_channel.set_permissions(
+            member, send_messages=False, read_messages=True)
+
+
 async def check_amoureux():
     # check if amoureux in deads
     for player in bot.DEADS:
@@ -319,7 +353,7 @@ async def check_enfant_sauvage():
     if(enfantSauvage != None):
         for player in bot.DEADS:
             if(player == enfantSauvage.role.target_choice):
-                enfantSauvage.role = LoupGarou()
+                enfantSauvage.role = EnfantSauvageTransforme()
                 bot.LOUPS.append(enfantSauvage)
                 # send him a message
                 await enfantSauvage.private_channel.send("**Votre maitre est mort, vous vous transformez en Loup-Garou**")

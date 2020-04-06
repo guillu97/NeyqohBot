@@ -28,8 +28,7 @@ async def election():
     target_player = None
     # no mayor has been chosen
     if(len(targets_choice) == 0):
-        target_choice = random.choice(bot.ALIVE_PLAYERS)
-        target_player = target_choice.player
+        target_player = random.choice(bot.ALIVE_PLAYERS)
     # draw for the votes
     elif(len(targets_choice) > 1):
         # choose the target randomly

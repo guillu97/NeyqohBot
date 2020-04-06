@@ -131,6 +131,17 @@ class EnfantSauvage(Villageois):
         self.target_choice = None
 
 
+class EnfantSauvageTransforme(LoupGarou):
+    nb = 0
+    nb_max = 1
+
+    def __init__(self):
+        self.roleName = "**Enfant Sauvage**"
+        self.description = "Son objectif est d'éliminer tous les Loups-Garous. Il choisit un modèle au début du jeu, si ce dernier meurt, il devient Loup-Garou et joue dans leur camp.\n "
+        self.image_filename = "enfant_sauvage.png"
+        self.target_choice = None
+
+
 # TODO: add implemented roles when their turn is coded
 IMPLEMENTED_ROLES = [SimpleVillageois(), Voyante(), Salvateur(), Sorcière(),
                      Chasseur(), Ange(), Cupidon(), EnfantSauvage(), LoupGarou(), LoupBlanc()]
