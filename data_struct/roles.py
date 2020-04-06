@@ -4,6 +4,7 @@ import constant
 class Role:
     emoji = None
     nb = 0
+    nb_max = 1
 
     def __str__(self):
         return self.roleName
@@ -21,6 +22,7 @@ class Mayor(Role):
 
 class LoupGarou(Role):
     nb = constant.DEFAULT_NB_LOUP
+    nb_max = 100000
 
     def __init__(self):
         self.roleName = "**Loup-Garou**"
@@ -30,6 +32,7 @@ class LoupGarou(Role):
 
 class LoupBlanc(LoupGarou):
     nb = constant.DEFAULT_NB_LOUP_BLANC
+    nb_max = 1
 
     def __init__(self):
         self.roleName = "**Loup-Garou Blanc**"
@@ -45,6 +48,7 @@ class Villageois(Role):
 
 class SimpleVillageois(Villageois):
     nb = 0
+    nb_max = 100000
 
     def __init__(self):
         self.roleName = "**Simple Villageois**"
@@ -54,6 +58,7 @@ class SimpleVillageois(Villageois):
 
 class Voyante(Villageois):
     nb = constant.DEFAULT_NB_VOYANTE
+    nb_max = 1
 
     def __init__(self):
         self.roleName = "**Voyante**"
@@ -63,6 +68,7 @@ class Voyante(Villageois):
 
 class Sorcière(Villageois):
     nb = constant.DEFAULT_NB_SORCIERE
+    nb_max = 1
 
     def __init__(self):
         self.roleName = "**Sorcière**"
@@ -74,6 +80,7 @@ class Sorcière(Villageois):
 
 class Chasseur(Villageois):
     nb = constant.DEFAULT_NB_CHASSEUR
+    nb_max = 1
 
     def __init__(self):
         self.roleName = "**Chasseur**"
@@ -84,6 +91,7 @@ class Chasseur(Villageois):
 
 class Ange(Villageois):
     nb = constant.DEFAULT_NB_ANGE
+    nb_max = 1
 
     def __init__(self):
         self.roleName = "**Ange**"
@@ -93,6 +101,7 @@ class Ange(Villageois):
 
 class Cupidon(Villageois):
     nb = 0
+    nb_max = 1
 
     def __init__(self):
         self.roleName = "**Cupidon**"
@@ -102,6 +111,7 @@ class Cupidon(Villageois):
 
 class Salvateur(Villageois):
     nb = 0
+    nb_max = 1
 
     def __init__(self):
         self.roleName = "**Salvateur**"
@@ -112,6 +122,7 @@ class Salvateur(Villageois):
 
 class EnfantSauvage(Villageois):
     nb = 0
+    nb_max = 1
 
     def __init__(self):
         self.roleName = "**Enfant Sauvage**"

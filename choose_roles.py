@@ -59,8 +59,13 @@ async def check_roles(channel, roles_msg, add_msg, remove_msg, possible_roles):
                             print(f'bad emoji index in check roles : {index}')
                             raise IndexError
                         role = possible_roles[index]
-                        role.__class__.nb += nb_to_change
-                        content = await calc_roles(verbose=True)
+                        if(nb_to_change == 1):
+                            if(role.__class__.nb + 1 <= role.__class__.nb_max):
+                                role.__class__.nb += nb_to_change
+                                content = await calc_roles(verbose=True)
+                        else:
+                            role.__class__.nb += nb_to_change
+                            content = await calc_roles(verbose=True)
                         await reaction.remove(master)
                         if(content != old_content):
                             await roles_msg.edit(content=content)
