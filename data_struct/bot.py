@@ -18,6 +18,7 @@ class Bot(object):
         return cls._instance
 
     def default_values(_instance):
+        _instance.GUILD = None
         _instance.BEGINNING_CHANNEL = None
         _instance.GAME_CATEGORY = None
         _instance.HISTORY_TEXT_CHANNEL = None

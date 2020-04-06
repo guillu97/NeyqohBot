@@ -31,6 +31,8 @@ async def new_game(ctx):
         await ctx.send('Une partie est déjà en cours')
         return
 
+    bot.GUILD = ctx.guild
+
     # save the channel where the new was typed
     bot.BEGINNING_CHANNEL = ctx.channel
 
@@ -72,6 +74,10 @@ async def new_game(ctx):
 @bot.command(name='stop', help='stop la partie en cours')
 @commands.has_role(constant.MASTER_OF_THE_GAME)
 async def command_stop_game(ctx):
+    if(bot.GUILD != ctx.guild):
+        await ctx.send("Une partie est en cours sur un autre serveur")
+        bot.GUILD = None
+        return
     await stop_game(ctx)
 
 
