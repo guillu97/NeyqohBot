@@ -87,6 +87,12 @@ async def game_process(ctx):
 
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
+        # check if target == ancien if ancien.powerUsed != False, if it is then => loup final target = None et ancien powerUsed = True
+        if(bot.LOUP_FINAL_TARGET != None):
+            if(isinstance(bot.LOUP_FINAL_TARGET.role, Ancien) and bot.LOUP_FINAL_TARGET.role.powerUsed == False):
+                bot.LOUP_FINAL_TARGET.role.powerUsed = True
+                bot.LOUP_FINAL_TARGET = None
+
         ### wake sorcière ###
         sorcières_targets = []
         if(await still_something(Sorcière)):
@@ -106,6 +112,9 @@ async def game_process(ctx):
 
         # if a sorciere killed add this kill to the deads of night
         for target in sorcières_targets:
+            # check if a sorcière's target is the Ancien then put innocentKilledHim to True
+            if(isinstance(target.role, Ancien)):
+                target.role.innocentKilledHim = True
             bot.DEADS_OF_NIGHT.append(target)
 
         ### display the night deads ###
@@ -122,6 +131,9 @@ async def game_process(ctx):
                     bot.ALIVE_PLAYERS.remove(player)
         bot.DEADS_OF_NIGHT.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
+
+        # check ancien killed by innocent #
+        await check_ancien()
 
         # check deads permissions #
         await check_deads_permissions()
@@ -148,6 +160,9 @@ async def game_process(ctx):
 
         # chasseur if killed then kill someone:
         await check_chasseur()
+
+        # check ancien killed by innocent #
+        await check_ancien()
 
         # check deads permissions #
         await check_deads_permissions()
@@ -219,10 +234,12 @@ async def game_process(ctx):
         ### compute dead of the day ###
         # if(bot.VICTIM != None):
         if(victim != None):
+            if(isinstance(victim.role, Ancien)):
+                victim.role.innocentKilledHim = True
             # bot.DEADS_OF_DAY.append(bot.VICTIM)
             bot.DEADS_OF_DAY.append(victim)
             # bot.VICTIM can be reset to None
-            #bot.VICTIM = None
+            # bot.VICTIM = None
 
         await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
 
@@ -244,6 +261,9 @@ async def game_process(ctx):
         bot.DEADS_OF_DAY.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
+        # check ancien killed by innocent #
+        await check_ancien()
+
         # check deads permissions #
         await check_deads_permissions()
 
@@ -260,6 +280,9 @@ async def game_process(ctx):
 
         # chasseur if killed then kill someone:
         await check_chasseur()
+
+        # check ancien killed by innocent #
+        await check_ancien()
 
         # check deads permissions #
         await check_deads_permissions()
@@ -322,6 +345,21 @@ async def check_deads_permissions():
             member, send_messages=True, read_messages=True)
         await player.private_channel.set_permissions(
             member, send_messages=False, read_messages=True)
+
+
+async def check_ancien():
+    for player in bot.DEADS:
+        if(isinstance(player.role, Ancien)):
+            if(player.role.innocentKilledHim == True):
+                await bot.HISTORY_TEXT_CHANNEL.send(f"**L'ancien {Ancien.emoji} : {player}** , est mort de la main d'un villageois, tous les villageois vont perdre leur pouvoir")
+                for alivePlayer in bot.ALIVE_PLAYERS:
+                    if(isinstance(alivePlayer.role, Villageois)):
+                        if(not isinstance(alivePlayer.role, EnfantSauvage)):
+                            tempEmoji = alivePlayer.role.emoji
+                            alivePlayer.role = SimpleVillageois()
+                            alivePlayer.role.emoji = tempEmoji
+                player.role.innocentKilledHim = False
+                break
 
 
 async def check_amoureux():

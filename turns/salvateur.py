@@ -1,9 +1,11 @@
 import discord
 import asyncio
 import constant
+import random
 from data_struct.roles import Salvateur
 from data_struct.bot import Bot
 from vote import vote
+
 
 bot = Bot()
 
@@ -36,6 +38,11 @@ async def salvateur_turn():
         await salvateur.private_channel.send("\n**vous n'avez choisi personne**\n")
     elif(len(targets_choice) == 1):
         target_choice = targets_choice[0]
+        target_player = target_choice.player
+        await salvateur.private_channel.send(f'\nVous avez choisi de protéger **{target_player}** \n')
+        salvateur.role.target_choice = target_player
+    elif(len(targets_choice) > 0):
+        target_choice = random.choice(targets_choice)
         target_player = target_choice.player
         await salvateur.private_channel.send(f'\nVous avez choisi de protéger **{target_player}** \n')
         salvateur.role.target_choice = target_player

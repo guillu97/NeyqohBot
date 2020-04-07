@@ -120,6 +120,18 @@ class Salvateur(Villageois):
         self.target_choice = None
 
 
+class Ancien(Villageois):
+    nb = 0
+    nb_max = 1
+
+    def __init__(self):
+        self.roleName = "**Ancien**"
+        self.description = "Son objectif est d'éliminer tous les Loups-Garous. Il peut résister à la première attaque des loups. Mais s'il est tué par un ou des innocent(s), tous les innocents perdront leurs pouvoirs !\n "
+        self.image_filename = "ancien.png"
+        self.powerUsed = False
+        self.innocentKilledHim = False
+
+
 class EnfantSauvage(Villageois):
     nb = 0
     nb_max = 1
@@ -143,6 +155,18 @@ class EnfantSauvageTransforme(LoupGarou):
         self.target_choice = None
 
 
+class EnfantSauvageTransforme(LoupGarou):
+    nb = 0
+    nb_max = 1
+    emoji = EnfantSauvage.emoji
+
+    def __init__(self):
+        self.roleName = "**Enfant Sauvage**"
+        self.description = "Son objectif est d'éliminer tous les Loups-Garous. Il choisit un modèle au début du jeu, si ce dernier meurt, il devient Loup-Garou et joue dans leur camp.\n "
+        self.image_filename = "enfant_sauvage.png"
+        self.target_choice = None
+
+
 # TODO: add implemented roles when their turn is coded
-IMPLEMENTED_ROLES = [SimpleVillageois(), Voyante(), Salvateur(), Sorcière(),
-                     Chasseur(), Ange(), Cupidon(), EnfantSauvage(), LoupGarou(), LoupBlanc()]
+IMPLEMENTED_ROLES = [SimpleVillageois(), Voyante(), Salvateur(), Sorcière(), Cupidon(),
+                     Chasseur(), Ancien(), Ange(), EnfantSauvage(), LoupGarou(), LoupBlanc()]

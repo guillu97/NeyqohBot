@@ -100,7 +100,9 @@ async def vote(channel, target_players, voters, emoji, time=0):
     tempChannelMembers = channel.members[:]
     for member in tempChannelMembers:
         await channel.set_permissions(
-            member, add_reactions=False, send_messages=False, read_messages=False)
+            member, add_reactions=False, send_messages=False, read_messages=True)
+        # await channel.set_permissions(
+        #    member, add_reactions=False, send_messages=False, read_messages=False)
     # wait synchronisation of the reaction changes
     await asyncio.sleep(1)
     # stop the task check of multiple reactions
@@ -160,6 +162,8 @@ async def vote(channel, target_players, voters, emoji, time=0):
 
     # accepting the other emojis from the temp members of the channel
     for member in tempChannelMembers:
+        # await channel.set_permissions(
+        #    member, add_reactions=True, send_messages=True, read_messages=True)
         await channel.set_permissions(
             member, add_reactions=True, send_messages=True, read_messages=True)
 
