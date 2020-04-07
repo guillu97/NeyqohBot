@@ -60,7 +60,10 @@ async def check_multiple_votes(channel, context_messages, emoji, voters):
         await asyncio.sleep(0.1)
 
 
-async def timer(channel, time):
+async def timer(channel, time, voters):
+    validate_emoji = "☑️"
+    validate_msg = await channel.send(f"Valider votre choix en ajoutant un {validate_emoji}")
+    validate_msg.add_reaction(emoji=validate_emoji)
     time_message = await channel.send(f'*temps restant: {time}*')
     for i in range(1, time+1):
         await asyncio.sleep(1)
@@ -92,7 +95,7 @@ async def vote(channel, target_players, voters, emoji, time=0):
         print("in vote: time == 0")
         raise Exception
     # start timer message
-    await timer(channel, time)
+    await timer(channel, time, voters)
 
     # TODO: search with Emoji.roles if there is another way to restrict emojis
     # not accepting the other emojis from all the members of the server
