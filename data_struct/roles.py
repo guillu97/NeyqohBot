@@ -12,6 +12,14 @@ class Role:
     def display_role(self):
         return self.roleName + "\n" + self.description
 
+    def __hash__(self):
+        return hash((self.roleName, self.description))
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.roleName == other.roleName and self.description == other.description
+
 # /!\ this class is only to have the emoji /!\
 
 

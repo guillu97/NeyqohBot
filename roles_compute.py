@@ -45,18 +45,28 @@ async def calc_roles(verbose):
 
     message = "\n"
     if(verbose):
+        count = 0
         for role in roles.IMPLEMENTED_ROLES:
             if(role.__class__.nb < 0):
                 role.__class__.nb = 0
-            message += f"**| {role.__class__.emoji} {role}: {role.__class__.nb}** "
-        message += "**|**\n"
+            message += f"**| {role.__class__.emoji} {role}: {role.__class__.nb}**   "
+            if(count % 2 == 0):
+                message += "\n"
+            count += 1
 
         if(len(roles_list) < nb_players):
             print('nb_roles < nb_players')
-            message += '\n**Le nombre de roles est inférieur au nombre de joueurs dans la partie**'
+            message += '\n**Le nombre de roles est inférieur au nombre de joueurs dans la partie**\n'
         elif(not bot.ALLOW_MORE_ROLES and len(roles_list) > nb_players):
             print('nb_roles > nb_players')
-            message += '\n**Le nombre de roles est supérieur au nombre de joueurs dans la partie**'
+            message += '\n**Le nombre de roles est supérieur au nombre de joueurs dans la partie**\n'
+
+        message += f'\n**nombre de roles: {len(roles_list)}**\n'
+
+        tempRoles = list(set(roles_list))
+        for role in tempRoles:
+            message += f"{role.emoji} {role} {role.nb} | "
+
         return message
     else:
         if(len(roles_list) < nb_players):

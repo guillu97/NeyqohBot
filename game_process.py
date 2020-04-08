@@ -319,7 +319,7 @@ async def game_process(ctx):
         bot.NB_NIGHTS += 1
 
     ### display winners ###
-    message = f"\n\n**Vainqueur(s) après la nuit {bot.NB_NIGHTS}: {bot.WINNER}**\n\n"
+    message = f"\n\n**Vainqueur(s) après la nuit {bot.NB_NIGHTS}:** {bot.WINNER}\n\n"
     message += f"\n\n**Les channels vont s'auto-détruire dans {constant.TIME_AUTO_DESTRUCT} secondes**\n\n"
     await bot.HISTORY_TEXT_CHANNEL.send(message)
 
@@ -413,7 +413,7 @@ async def still_something(check_class):
 
 async def check_ange_win(table_deads_of_day):
     if(bot.NB_NIGHTS == 1 and len(table_deads_of_day) == 1 and isinstance(table_deads_of_day[0].role, Ange)):
-        bot.WINNER = "Ange"
+        bot.WINNER = "**Ange**"
         return True
     return False
 
@@ -430,18 +430,18 @@ async def check_win():
         bot.WINNER = bot.ALIVE_PLAYERS[0].role
         wins = True
     elif(len(bot.ALIVE_PLAYERS) == 2 and bot.ALIVE_PLAYERS[0] in bot.AMOUREUX and bot.ALIVE_PLAYERS[0] in bot.AMOUREUX):
-        bot.WINNER = "Amoureux"
+        bot.WINNER = "**Amoureux**"
         wins = True
     elif(not still_loups):
         # TODO: change this in funct of roles
-        bot.WINNER = "Villageois"
+        bot.WINNER = "**Villageois**"
         wins = True
     elif(not still_villageois and not still_loups_blanc):
         # TODO: if lovers only left then lovers win
-        bot.WINNER = "Loups Garous"
+        bot.WINNER = "**Loups Garous**"
         wins = True
     if(len(bot.ALIVE_PLAYERS) == 0):
-        bot.WINNER = "Dieux"
+        bot.WINNER = "**Dieux**"
         wins = True
 
     return wins

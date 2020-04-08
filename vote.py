@@ -63,11 +63,27 @@ async def check_multiple_votes(channel, context_messages, emoji, voters):
 async def timer(channel, time, voters):
     validate_emoji = "☑️"
     validate_msg = await channel.send(f"Valider votre choix en ajoutant un {validate_emoji}")
-    validate_msg.add_reaction(emoji=validate_emoji)
+    await validate_msg.add_reaction(emoji=validate_emoji)
     time_message = await channel.send(f'*temps restant: {time}*')
+
+    # if all voters validated the choice then break the timer
+    voters_validated = False
     for i in range(1, time+1):
         await asyncio.sleep(1)
         await time_message.edit(content=str(f'*temps restant: {time-i}*'))
+        # search validate message
+        async for message in channel.history(limit=30):
+            if(message.id == validate_msg.id):
+                # check the reaction if reaction emoji == validate emoji
+                for reaction in message.reactions:
+                    if(reaction.emoji == validate_emoji):
+                        # check the users that have validated, if all voters validated the stop the timer
+                        if(reaction.count == len(voters) + 1):
+                            voters_validated = True
+                        break
+        # if all voters validated the choice then break the timer
+        if(voters_validated):
+            break
     # print("timer finished")
 
 
