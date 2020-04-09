@@ -42,7 +42,7 @@ async def check_multiple_votes(channel, context_messages, emoji, voters):
                                         print(
                                             "player not in playerReacts.keys() => a player that cannot vote maybe")
                                         await reaction.remove(user)
-                                        break
+                                        continue
 
                                     # if no reaction before then add one
                                     if(playerReacts[user] == None):
@@ -60,12 +60,14 @@ async def check_multiple_votes(channel, context_messages, emoji, voters):
         await asyncio.sleep(0.1)
 
 
-async def timer(channel, time, voters):
+async def timer_and_validate(channel, time, voters):
     validate_emoji = "☑️"
-    validate_msg = await channel.send(f"Valider votre choix en ajoutant un {validate_emoji}")
+    validate_msg = await channel.send(f"Validez votre choix en ajoutant un {validate_emoji}")
     await validate_msg.add_reaction(emoji=validate_emoji)
+
     time_message = await channel.send(f'*temps restant: {time}*')
 
+    votersDiscord = [player.discordMember for player in voters]
     # if all voters validated the choice then break the timer
     voters_validated = False
     for i in range(1, time+1):
@@ -78,9 +80,23 @@ async def timer(channel, time, voters):
                 for reaction in message.reactions:
                     if(reaction.emoji == validate_emoji):
                         # check the users that have validated, if all voters validated the stop the timer
-                        if(reaction.count == len(voters) + 1):
+                        users = reaction.users()
+                        users = await users.flatten()
+                        countVoters = 0
+                        if(len(users) != 1):
+                            for user in users:
+                                if(not user.bot):
+                                    if(user not in votersDiscord):
+                                        await reaction.remove(user)
+                                        continue
+
+                                    countVoters += 1
+
+                        if(countVoters == len(voters)):
                             voters_validated = True
+
                         break
+                break
         # if all voters validated the choice then break the timer
         if(voters_validated):
             break
@@ -104,14 +120,17 @@ async def vote(channel, target_players, voters, emoji, time=0):
     ids = [message.id for message in messages]
 
     # start the task check of multiple reactions
-    task_msg_check = asyncio.create_task(
-        check_multiple_votes(channel, messages, emoji, voters))
+    try:
+        task_msg_check = asyncio.create_task(
+            check_multiple_votes(channel, messages, emoji, voters))
+    except Exception as e:
+        print(e)
 
     if(time == 0):
         print("in vote: time == 0")
         raise Exception
     # start timer message
-    await timer(channel, time, voters)
+    await timer_and_validate(channel, time, voters)
 
     # TODO: search with Emoji.roles if there is another way to restrict emojis
     # not accepting the other emojis from all the members of the server
@@ -125,7 +144,10 @@ async def vote(channel, target_players, voters, emoji, time=0):
     # wait synchronisation of the reaction changes
     await asyncio.sleep(1)
     # stop the task check of multiple reactions
-    task_msg_check.cancel()
+    try:
+        task_msg_check.cancel()
+    except Exception as e:
+        print(e)
 
     # target = {player: [accusators:Player]}
     # emojisCount = {}

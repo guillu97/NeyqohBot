@@ -5,7 +5,7 @@ import constant
 from data_struct.bot import Bot
 from data_struct.player import Player
 from data_struct.roles import *
-from roles_compute import calc_roles, assign_roles
+from roles_compute import calc_roles
 
 from data_struct.target import Target
 

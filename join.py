@@ -83,7 +83,7 @@ async def check_players(channel, joining_msg, players_msg, emoji_join, emoji_sta
                             # from discord Members to Players obj
                             bot.PLAYERS = [Player(user)
                                            for user in players_discord]
-                            await players_msg.edit(content=str(f'joueurs:\n {" ".join(map(str,bot.PLAYERS))} \n**nombre de joueurs :** {len(bot.PLAYERS)}\n'))
+                            await players_msg.edit(content=str(f'joueurs:\n **{"** | **".join(map(str,bot.PLAYERS))}** \n**nombre de joueurs :** {len(bot.PLAYERS)}\n'))
                             old_players_discord = players_discord
                 break
         # need to sleep at least a bit because otherwise we cannot cancel the task

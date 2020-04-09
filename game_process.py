@@ -151,13 +151,6 @@ async def game_process(ctx):
 
         await check_enfant_sauvage()
 
-        ### check someone wins or draw ###
-        # check if only one player left
-        print("check_win")
-        print(await check_win())
-        if(await check_win()):
-            break
-
         # chasseur if killed then kill someone:
         await check_chasseur()
 
@@ -210,6 +203,14 @@ async def game_process(ctx):
         for role in roles:
             message += f'{role.emoji} **{role}** \n'
         message += '\n'
+        """
+        """
+        roles_list = []
+        for player in bot.ALIVE_PLAYERS:
+            roles_list.append(player.role)
+        tempRoles = list(set(roles_list))
+        for role in tempRoles:
+            message += f"{role.emoji} {role} {role.nb} | "
         """
 
         await bot.HISTORY_TEXT_CHANNEL.send(message)
