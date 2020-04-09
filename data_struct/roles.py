@@ -94,7 +94,7 @@ class Chasseur(Villageois):
         self.roleName = "**Chasseur**"
         self.description = "Son objectif est d'éliminer tous les Loups-Garous. A sa mort, il doit éliminer un joueur en utilisant sa dernière balle...\n "
         self.image_filename = "chasseur.png"
-        self.target_choice = None
+        self.powerUsed = False
 
 
 class Ange(Villageois):

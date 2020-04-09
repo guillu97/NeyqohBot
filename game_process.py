@@ -368,8 +368,8 @@ async def check_amoureux():
     for player in bot.DEADS:
         if(player in bot.AMOUREUX):
             bot.AMOUREUX.remove(player)
-            message = f"\n**{player}** était amoureux avec : **{bot.AMOUREUX[0]}**"
-            message += f"\n**{bot.AMOUREUX[0]}** est donc également mort, son role : {bot.AMOUREUX[0].role.emoji} **{bot.AMOUREUX[0].role}**\n"
+            message = f"\n**{player} {player.role.emoji}** était amoureux avec : **{bot.AMOUREUX[0]}** {bot.AMOUREUX[0].role.emoji}"
+            message += f"\n**{bot.AMOUREUX[0]}** {bot.AMOUREUX[0].role.emoji} est donc également mort, son role : {bot.AMOUREUX[0].role.emoji} **{bot.AMOUREUX[0].role}**\n"
             await bot.HISTORY_TEXT_CHANNEL.send(message)
             bot.DEADS.append(bot.AMOUREUX[0])
             bot.ALIVE_PLAYERS.remove(bot.AMOUREUX[0])
@@ -380,11 +380,13 @@ async def check_amoureux():
 async def check_chasseur():
     for player in bot.DEADS:
         if(isinstance(player.role, Chasseur)):
-            target = await chasseur_turn(player)
-            if(target != None):
-                bot.DEADS.append(target)
-                bot.ALIVE_PLAYERS.remove(target)
-                break
+            if(player.role.powerUsed == False):
+                target = await chasseur_turn(player)
+                player.role.powerUsed = True
+                if(target != None):
+                    bot.DEADS.append(target)
+                    bot.ALIVE_PLAYERS.remove(target)
+                    break
 
 
 async def check_enfant_sauvage():
