@@ -132,44 +132,7 @@ async def game_process(ctx):
         bot.DEADS_OF_NIGHT.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
-        # check ancien killed by innocent #
-        await check_ancien()
-
-        # check deads permissions #
-        await check_deads_permissions()
-
-        await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
-
-        # TODO: remove the permissions to write in history text channel of the deads : do this in a function that you are gonna paste multiple times
-
-        await check_amoureux()
-
-        # check deads permissions #
-        await check_deads_permissions()
-
-        await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
-
-        await check_enfant_sauvage()
-
-        # chasseur if killed then kill someone:
-        await check_chasseur()
-
-        # check ancien killed by innocent #
-        await check_ancien()
-
-        # check deads permissions #
-        await check_deads_permissions()
-
-        await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
-
-        await check_amoureux()
-
-        # check deads permissions #
-        await check_deads_permissions()
-
-        await check_enfant_sauvage()
-
-        await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
+        await check_chain_reaction()
 
         ### check someone wins or draw ###
         # check if only one player left
@@ -262,43 +225,7 @@ async def game_process(ctx):
         bot.DEADS_OF_DAY.clear()
         await bot.HISTORY_TEXT_CHANNEL.send(message)
 
-        # check ancien killed by innocent #
-        await check_ancien()
-
-        # check deads permissions #
-        await check_deads_permissions()
-
-        await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
-
-        await check_amoureux()
-
-        await check_enfant_sauvage()
-
-        # check deads permissions #
-        await check_deads_permissions()
-
-        await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
-
-        # chasseur if killed then kill someone:
-        await check_chasseur()
-
-        # check ancien killed by innocent #
-        await check_ancien()
-
-        # check deads permissions #
-        await check_deads_permissions()
-
-        await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
-
-        ### check amoureux ###
-        await check_amoureux()
-
-        # check deads permissions #
-        await check_deads_permissions()
-
-        await check_enfant_sauvage()
-
-        await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
+        await check_chain_reaction()
 
         ### check if village wins or lovers or loups ###
         print("check_win")
@@ -348,6 +275,34 @@ async def check_deads_permissions():
             member, send_messages=False, read_messages=True)
 
 
+async def check_chain_reaction():
+    # check deads permissions #
+    await check_deads_permissions()
+
+    await check_enfant_sauvage()
+
+    # check ancien killed by innocent #
+    if(await check_ancien()):
+        await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
+
+    if(await check_amoureux()):
+        await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
+        # check deads permissions #
+        await check_deads_permissions()
+        await check_enfant_sauvage()
+
+    # chasseur if killed then kill someone:
+    if(await check_chasseur()):
+        # check ancien killed by innocent #
+        if(await check_ancien()):
+            await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
+        if(await check_amoureux()):
+            await asyncio.sleep(constant.TIME_BETWEEN_TURNS)
+        # check deads permissions #
+        await check_deads_permissions()
+        await check_enfant_sauvage()
+
+
 async def check_ancien():
     for player in bot.DEADS:
         if(isinstance(player.role, Ancien)):
@@ -360,7 +315,8 @@ async def check_ancien():
                             alivePlayer.role = SimpleVillageois()
                             alivePlayer.role.emoji = tempEmoji
                 player.role.innocentKilledHim = False
-                break
+                return True
+    return False
 
 
 async def check_amoureux():
@@ -368,13 +324,14 @@ async def check_amoureux():
     for player in bot.DEADS:
         if(player in bot.AMOUREUX):
             bot.AMOUREUX.remove(player)
-            message = f"\n**{player} {player.role.emoji}** était amoureux avec : **{bot.AMOUREUX[0]}** {bot.AMOUREUX[0].role.emoji}"
-            message += f"\n**{bot.AMOUREUX[0]}** {bot.AMOUREUX[0].role.emoji} est donc également mort, son role : {bot.AMOUREUX[0].role.emoji} **{bot.AMOUREUX[0].role}**\n"
+            message = f"\n**{player}** était amoureux avec : **{bot.AMOUREUX[0]}**"
+            message += f"\n**{bot.AMOUREUX[0]}** est donc également mort, son role : {bot.AMOUREUX[0].role.emoji} **{bot.AMOUREUX[0].role}**\n"
             await bot.HISTORY_TEXT_CHANNEL.send(message)
             bot.DEADS.append(bot.AMOUREUX[0])
             bot.ALIVE_PLAYERS.remove(bot.AMOUREUX[0])
             bot.AMOUREUX.clear()
-            break
+            return True
+    return False
 
 
 async def check_chasseur():
@@ -384,9 +341,13 @@ async def check_chasseur():
                 target = await chasseur_turn(player)
                 player.role.powerUsed = True
                 if(target != None):
+                    await bot.HISTORY_TEXT_CHANNEL.send(f"**{target}** était {target.role.emoji} **{target.role}**")
+                    if(isinstance(target.role, Ancien)):
+                        target.role.innocentKilledHim = True
                     bot.DEADS.append(target)
                     bot.ALIVE_PLAYERS.remove(target)
-                    break
+                return True
+    return False
 
 
 async def check_enfant_sauvage():

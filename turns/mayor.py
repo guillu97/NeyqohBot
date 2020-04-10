@@ -21,8 +21,7 @@ async def mayor_give_up(mayor):
     # if no target
     if(len(targets_choice) == 0):
         # choose the target randomly
-        target_choice = random.choice(bot.ALIVE_PLAYERS)
-        target_player = target_choice.player
+        target_player = random.choice(bot.ALIVE_PLAYERS)
     elif(len(targets_choice) == 1):
         target_choice = targets_choice[0]
         target_player = target_choice.player
