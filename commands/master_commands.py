@@ -361,7 +361,7 @@ async def test(ctx):
         await ctx.send("la partie a déjà commencé")
         return"""
 
-    targets_choice = await vote(channel=ctx.channel, target_players=bot.PLAYERS, voters=bot.PLAYERS, emoji="👎", time=10)
+    targets_choice = await vote(channel=ctx.channel, target_players=bot.PLAYERS, voters=bot.PLAYERS, emoji="👎", time=10, nb_votes_max=2)
 
     target_choice = None
     if(len(targets_choice) == 1):
@@ -369,6 +369,9 @@ async def test(ctx):
 
     if(target_choice != None):
         await ctx.send(f'**{target_choice.nb_accusators()}** votes pour **{target_choice.player}**: | *{"* | *".join(map(str,target_choice.accusators))}* |')
+    elif(len(targets_choice) > 1):
+        for target_choice in targets_choice:
+            await ctx.send(f'**{target_choice.nb_accusators()}** votes pour **{target_choice.player}**: | *{"* | *".join(map(str,target_choice.accusators))}* |')
     else:
         await ctx.send(f"vous n'avez pas fait de choix")
 

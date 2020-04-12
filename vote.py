@@ -3,7 +3,7 @@ from discord import Emoji
 from data_struct.target import TargetEmoji
 
 
-async def check_multiple_votes(channel, context_messages, emoji, voters):
+async def check_multiple_votes(channel, context_messages, emoji, voters, nb_votes_max=1):
     # check nb reactions per player
     # => should be 0 at the beginning
     # => to be sure => remove all reactions except from me
@@ -11,14 +11,15 @@ async def check_multiple_votes(channel, context_messages, emoji, voters):
     # playerReacts = {player: Reaction}  # a dict associating the player to the only reaction he has
     playerReacts = {}
     for player in voters:
-        playerReacts[player.discordMember] = None
+        playerReacts[player.discordMember] = []
 
     ids = [message.id for message in context_messages]
     async for message in channel.history(limit=30):
-        if message.id in ids:
-            if(len(message.reactions) != 1):
-                await message.clear_reactions()
-                await message.add_reaction(emoji=emoji)
+        if message.id not in ids:
+            continue
+        if(len(message.reactions) != 1):
+            await message.clear_reactions()
+            await message.add_reaction(emoji=emoji)
 
     while(True):
         # print("check running")
@@ -26,35 +27,66 @@ async def check_multiple_votes(channel, context_messages, emoji, voters):
         # if before it was 0  => don't remove the reaction
         # if it was not 0 => remove the old reaction and let the new reaction
 
-        async for message in channel.history(limit=30):
-            if(message.id in ids):
-                for reaction in message.reactions:
-                    # if not the good emoji => then delete
-                    if(reaction.emoji != emoji):
-                        await reaction.clear()
-                    else:
-                        users = reaction.users()
-                        users = await users.flatten()
-                        if(len(users) != 1):
-                            for user in users:
-                                if(not user.bot):
-                                    if(user not in playerReacts.keys()):
-                                        print(
-                                            "player not in playerReacts.keys() => a player that cannot vote maybe")
-                                        await reaction.remove(user)
-                                        continue
 
-                                    # if no reaction before then add one
-                                    if(playerReacts[user] == None):
-                                        playerReacts[user] = reaction
-                                    # if the message of the reaction changed
-                                    # print(
-                                    #    f"DEBUG: {playerReacts[user].message}")
-                                    # print(f"DEBUG: {playerReacts}")
-                                    if(playerReacts[user].message.id != message.id):
-                                        # remove the old reaction and remove the reaction from the list
-                                        await playerReacts[user].remove(user)
-                                        playerReacts[user] = reaction
+        async for message in channel.history(limit=30):
+            if(message.id not in ids):
+                continue
+            for reaction in message.reactions:
+                # if not the good emoji => then delete
+                if(reaction.emoji != emoji):
+                    await reaction.clear()
+                    continue
+
+                
+                
+                users = reaction.users()
+                users = await users.flatten()
+
+                # remove uncheked reactions from table
+                for user,player_reactions in playerReacts.items():
+                    for player_reaction in player_reactions:
+                        if(player_reaction.message.id == reaction.message.id and user not in users):
+                            player_reactions.remove(player_reaction)
+
+                if(len(users) == 1):
+                    continue
+                for user in users:
+                    if(user.bot):
+                        continue
+                    if(user not in playerReacts.keys()):
+                        print(
+                            "player not in playerReacts.keys() => a player that cannot vote maybe")
+                        await reaction.remove(user)
+                        continue
+                    
+                    
+
+                    reaction_message_ids = [reaction.message.id for reaction in playerReacts[user]]
+                    if(message.id not in reaction_message_ids):
+                        playerReacts[user].append(reaction)
+                        print(playerReacts)
+                        if(len(playerReacts[user]) > nb_votes_max):
+                            for _ in range(len(playerReacts[user]) - nb_votes_max):
+                                # remove one reaction from the reactions
+                                reaction_to_remove = playerReacts[user].pop(-1)
+                                await reaction_to_remove.remove(user)
+
+                    
+                        
+
+                    """
+                    # if no reaction before then add one
+                    if(playerReacts[user] == None):
+                        playerReacts[user] = reaction
+                    # if the message of the reaction changed
+                    # print(
+                    #    f"DEBUG: {playerReacts[user].message}")
+                    # print(f"DEBUG: {playerReacts}")
+                    if(playerReacts[user].message.id != message.id):
+                        # remove the old reaction and remove the reaction from the list
+                        await playerReacts[user].remove(user)
+                        playerReacts[user] = reaction
+                    """
         # need to sleep at least a bit because otherwise we cannot cancel the task
         # await asyncio.sleep(1)
         await asyncio.sleep(0.1)
@@ -111,7 +143,7 @@ async def wait_event(event_variable):
 # @return [] or a list of TargetEmoji
 
 
-async def vote(channel, target_players, voters, emoji, time=0):
+async def vote(channel, target_players, voters, emoji, time=0, nb_votes_max=1):
     messages = []
     for player in target_players:
         message = await channel.send(f'{player.discordMember.mention}')
@@ -122,7 +154,7 @@ async def vote(channel, target_players, voters, emoji, time=0):
     # start the task check of multiple reactions
     try:
         task_msg_check = asyncio.create_task(
-            check_multiple_votes(channel, messages, emoji, voters))
+            check_multiple_votes(channel, messages, emoji, voters, nb_votes_max))
     except Exception as e:
         print(e)
 
